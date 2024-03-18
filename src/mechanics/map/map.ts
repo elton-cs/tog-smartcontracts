@@ -1,6 +1,6 @@
 import { Field, SmartContract, State, method, state } from "o1js";
 
-class GameMap extends SmartContract {
+export class GameMap extends SmartContract {
     @state(Field) maxX = State<Field>();
     @state(Field) maxY = State<Field>();
 
