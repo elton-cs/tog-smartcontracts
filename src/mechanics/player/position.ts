@@ -1,7 +1,7 @@
 import { Field, Poseidon, PublicKey, SmartContract, State, method, state } from "o1js";
 import { GameMap } from "../map/map";
 
-class Position extends SmartContract {
+export class Position extends SmartContract {
     @state(Field) playerPosition = State<Field>();
     @state(PublicKey) mapAddress = State<PublicKey>();
 
