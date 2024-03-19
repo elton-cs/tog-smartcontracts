@@ -10,7 +10,7 @@ export class GameMap extends SmartContract {
         this.maxY.set(Field(0));
     }
 
-    @method setMap(maxX: Field, maxY: Field) {
+    @method createMapArea(maxX: Field, maxY: Field) {
         let initX = this.maxX.getAndRequireEquals();
         let initY = this.maxY.getAndRequireEquals();
 
