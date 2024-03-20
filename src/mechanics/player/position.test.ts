@@ -1,11 +1,13 @@
 // import { Add } from './Add';
 import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
-import { GameMap } from './map/map';
-import { Position } from './player/position';
+import { GameMap } from '../map/map';
+import { Position } from './position';
+import { mapDeploy } from '../testHelpers';
+import { positionDeploy } from '../testHelpers';
 
 let proofsEnabled = true;
 
-describe('Player Placement on Map Integration', () => {
+describe('Player Position', () => {
     let togDeployerAccount: PublicKey,
         togDeployerKey: PrivateKey,
         playerAccount: PublicKey,
@@ -42,59 +44,21 @@ describe('Player Placement on Map Integration', () => {
         positionZkApp = new Position(positionContractAddress); 
     });
 
-    async function mapDeploy() {
-        const txn = await Mina.transaction(togDeployerAccount, () => {
-            AccountUpdate.fundNewAccount(togDeployerAccount);
-            mapZkApp.deploy();
-        });
-        await txn.prove();
-        await txn.sign([togDeployerKey, mapContractKey]).send();
-    }
-
-    async function positionDeploy() {
-        const txn = await Mina.transaction(togDeployerAccount, () => {
-            AccountUpdate.fundNewAccount(togDeployerAccount);
-            positionZkApp.deploy();
-        });
-        await txn.prove();
-        await txn.sign([togDeployerKey, positionContractKey]).send();
-    }
-
     // unit tests
-    it('generates and deploys the `GameMap` smart contract', async () => {
-        await mapDeploy();
-        const maxX = mapZkApp.maxX.get();
-        expect(maxX).toEqual(Field(0));
-        const maxY = mapZkApp.maxY.get();
-        expect(maxY).toEqual(Field(0));
-    });
-
-    it('creates a basic 10x10 game map', async () => {
-        await mapDeploy();
-
-        const txn = await Mina.transaction(togDeployerAccount, () => {
-            mapZkApp.createMapArea(Field(10), Field(10));
-        });
-        await txn.prove();
-        await txn.sign([togDeployerKey]).send();
-
-        const maxX = mapZkApp.maxX.get();
-        expect(maxX).toEqual(Field(10));
-        const maxY = mapZkApp.maxY.get();
-        expect(maxY).toEqual(Field(10));
-    });
-
     it('generates and deploys the `Position` smart contract', async () => {
-        await mapDeploy();
-        await positionDeploy();
+        await mapDeploy(togDeployerKey, mapContractKey, mapZkApp);
+
+        await positionDeploy(togDeployerKey, positionContractKey, positionZkApp);
         const mapAddress = positionZkApp.mapAddress.get();
         expect(mapAddress).toEqual(PublicKey.empty())
 
     });
 
     it('adds existing game map into `Position` contract', async () => {
-        await mapDeploy();
-        await positionDeploy();
+        await mapDeploy(togDeployerKey, mapContractKey, mapZkApp);
+
+        await positionDeploy(togDeployerKey, positionContractKey, positionZkApp);
+
 
         const txn = await Mina.transaction(togDeployerAccount, () => {
             positionZkApp.setMap(mapContractAddress);
@@ -108,8 +72,9 @@ describe('Player Placement on Map Integration', () => {
     });
 
     it('adds existing game map into `Position` contract', async () => {
-        await mapDeploy();
-        await positionDeploy();
+        await mapDeploy(togDeployerKey, mapContractKey, mapZkApp);
+        await positionDeploy(togDeployerKey, positionContractKey, positionZkApp);
+
 
         // creating a 10x10 map
         const txn1 = await Mina.transaction(togDeployerAccount, () => {
