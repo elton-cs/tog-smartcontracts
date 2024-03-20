@@ -3,34 +3,33 @@ import { GameMap } from "../map/map";
 
 export class Position extends SmartContract {
     @state(Field) playerPosition = State<Field>();
-    @state(PublicKey) mapAddress = State<PublicKey>();
+    @state(PublicKey) mapContractAddress = State<PublicKey>();
 
     init(){
         super.init();
         let emptyPK = PublicKey.empty();
-        this.mapAddress.set(emptyPK)
+        this.mapContractAddress.set(emptyPK)
     }
 
-    @method setMap(mapAddress: PublicKey) {
-        let emptyAddress = this.mapAddress.getAndRequireEquals();
-        emptyAddress.assertEquals(PublicKey.empty())
-        this.mapAddress.set(mapAddress);
+    @method linkMap(mapContractAddress: PublicKey) {
+        this.mapContractAddress.requireEquals(PublicKey.empty())
+        this.mapContractAddress.set(mapContractAddress);
     }
 
     @method setInitialPosition(playerNumber: Field, posX: Field, posY: Field) {
         // currently, the number of players in a match is hard-coded
         playerNumber.assertGreaterThanOrEqual(Field(1));
         playerNumber.assertLessThanOrEqual(Field(5));
-        posX.assertGreaterThan(Field(0));
-        posY.assertGreaterThan(Field(0));
+        posX.assertGreaterThanOrEqual(Field(0));
+        posY.assertGreaterThanOrEqual(Field(0));
 
-        let mapAddress = this.mapAddress.getAndRequireEquals();
-        const gameMap = new GameMap(mapAddress);
-        let x = gameMap.maxX.getAndRequireEquals();
-        let y = gameMap.maxY.getAndRequireEquals();
+        let mapContractAddress = this.mapContractAddress.getAndRequireEquals();
+        const gameMap = new GameMap(mapContractAddress);
+        let boundedX = gameMap.maxX.getAndRequireEquals();
+        let boundedY = gameMap.maxY.getAndRequireEquals();
 
-        posX.assertLessThanOrEqual(x);
-        posY.assertLessThanOrEqual(y);
+        posX.assertLessThanOrEqual(boundedX);
+        posY.assertLessThanOrEqual(boundedY);
 
         let position = Poseidon.hash([playerNumber, posX, posY]);
         this.playerPosition.set(position);

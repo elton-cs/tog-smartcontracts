@@ -49,8 +49,8 @@ describe('Player Position', () => {
         await mapDeploy(togDeployerKey, mapContractKey, mapZkApp);
 
         await positionDeploy(togDeployerKey, positionContractKey, positionZkApp);
-        const mapAddress = positionZkApp.mapAddress.get();
-        expect(mapAddress).toEqual(PublicKey.empty())
+        const mapContractAddress = positionZkApp.mapContractAddress.get();
+        expect(mapContractAddress).toEqual(PublicKey.empty())
 
     });
 
@@ -61,13 +61,13 @@ describe('Player Position', () => {
 
 
         const txn = await Mina.transaction(togDeployerAccount, () => {
-            positionZkApp.setMap(mapContractAddress);
+            positionZkApp.linkMap(mapContractAddress);
         });
         await txn.prove();
         await txn.sign([togDeployerKey]).send();
 
-        const mapAddress = positionZkApp.mapAddress.get();
-        expect(mapAddress).toEqual(mapContractAddress)
+        const mapContractAddress = positionZkApp.mapContractAddress.get();
+        expect(mapContractAddress).toEqual(mapContractAddress)
 
     });
 
@@ -85,7 +85,7 @@ describe('Player Position', () => {
 
         // setting 10x10 map as default map for position contract 
         const txn2 = await Mina.transaction(togDeployerAccount, () => {
-            positionZkApp.setMap(mapContractAddress);
+            positionZkApp.linkMap(mapContractAddress);
         });
         await txn2.prove();
         await txn2.sign([togDeployerKey]).send();
