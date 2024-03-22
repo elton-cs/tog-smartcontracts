@@ -30,6 +30,9 @@ export class FullMovement extends SmartContract {
     }
 
     @method moveCardinal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
+        // assert function caller knows the salt, and therefore, has permission to update the position
+        let oldPositionHash = this.playerPosition2D.getAndRequireEquals();
+        oldPositionHash.assertEquals(Poseidon.hash([oldPosition.x, oldPosition.y, playerSalt]));
         // An addition and multiplication check to assert that `directionVector` contains a unit vector
         // multiplying the components of the directionVector should give 0
         let vectorMul = directionVector.x.mul(directionVector.y);
@@ -50,6 +53,9 @@ export class FullMovement extends SmartContract {
     }
 
     @method moveDiagonal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
+        // assert function caller knows the salt, and therefore, has permission to update the position
+        let oldPositionHash = this.playerPosition2D.getAndRequireEquals();
+        oldPositionHash.assertEquals(Poseidon.hash([oldPosition.x, oldPosition.y, playerSalt]));
         // An addition and multiplication check to assert that `directionVector` contains a diagonal vector
         // multiplying the components of the vector should give either 1 or -1
         let vectorMul = directionVector.x.mul(directionVector.y);
