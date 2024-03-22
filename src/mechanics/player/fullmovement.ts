@@ -31,17 +31,41 @@ export class FullMovement extends SmartContract {
 
     @method moveCardinal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
         // An addition and multiplication check to assert that `directionVector` contains a unit vector
-        // aka: exactly one 0 value and either a 1 or -1 in the x or y direction
+        // multiplying the components of the directionVector should give 0
         let vectorMul = directionVector.x.mul(directionVector.y);
         vectorMul.assertEquals(Field(0));
+        // adding the components of the directionVector should give either 1 or -1
         let vectorSum = directionVector.x.add(directionVector.y);
         let isCorrectDirection = vectorSum.equals(Field(1)).or(vectorSum.equals(Field(-1)));
         isCorrectDirection.assertEquals(Bool(true));
 
+        // add the directionVector to the old position to get the updated position
+        let xNew = oldPosition.x.add(directionVector.x);
+        let yNew = oldPosition.y.add(directionVector.y);
+        this.isWithinMapBounds({x: xNew, y: yNew});
+        
+        // update to the new position
+        let positionHash = Poseidon.hash([xNew, yNew, playerSalt])
+        this.playerPosition2D.set(positionHash)
+    }
+
+    @method moveDiagonal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
+        // An addition and multiplication check to assert that `directionVector` contains a diagonal vector
+        // multiplying the components of the vector should give either 1 or -1
+        let vectorMul = directionVector.x.mul(directionVector.y);
+        let isGoodMultiply = vectorMul.equals(Field(1)).or(vectorMul.equals(Field(-1)));
+        isGoodMultiply.assertEquals(Bool(true));
+        // adding the components of the directionVector should give 2, 0, or -2
+        let vectorSum = directionVector.x.add(directionVector.y);
+        let isGoodAddition = vectorSum.equals(Field(2)).or(vectorSum.equals(Field(0))).or(vectorSum.equals(Field(-2)));
+        isGoodAddition.assertEquals(Bool(true));
+
+        // add the directionVector to the old position to get the updated position
         let xNew = oldPosition.x.add(directionVector.x);
         let yNew = oldPosition.y.add(directionVector.y);
         this.isWithinMapBounds({x: xNew, y: yNew});
 
+        // update to the new position
         let positionHash = Poseidon.hash([xNew, yNew, playerSalt])
         this.playerPosition2D.set(positionHash)
     }
