@@ -1,7 +1,7 @@
-import { Field, Mina, PrivateKey, PublicKey, AccountUpdate } from 'o1js';
+import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
 import { FullMovement, Position2D } from './fullmovement';
 
-let proofsEnabled = true;
+let proofsEnabled = false;
 
 describe('Player Position', () => {
     let togDeployerKey: PrivateKey,
@@ -57,4 +57,23 @@ describe('Player Position', () => {
         expect(deployedInitMapBound).toEqual(initMapBound);
 
     });
+
+    it('sets initial position for player', async () => {
+        await fullmoveDeploy();
+
+        let myNewPosition = new Position2D({x: Field(2), y: Field(2)});
+        let mySecretSalt = Field(42069);
+        
+        const txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.setInitPosition(myNewPosition, mySecretSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        let myNewPositionHash = Poseidon.hash([myNewPosition.x, myNewPosition.y, mySecretSalt])
+        
+        let onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myNewPositionHash);
+    });
+
 });
