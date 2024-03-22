@@ -24,6 +24,9 @@ export class FullMovement extends SmartContract {
     }
 
     @method setInitPosition(initPosition: Position2D, playerSalt: Field){
+        let onchainPosition = this.playerPosition2D.getAndRequireEquals();
+        onchainPosition.assertEquals(Field(0));
+        
         this.isWithinMapBounds(initPosition);
         let positionHash = Poseidon.hash([initPosition.x, initPosition.y, playerSalt])
         this.playerPosition2D.set(positionHash)
