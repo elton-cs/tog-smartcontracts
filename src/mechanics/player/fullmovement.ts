@@ -28,5 +28,22 @@ export class FullMovement extends SmartContract {
         let positionHash = Poseidon.hash([initPosition.x, initPosition.y, playerSalt])
         this.playerPosition2D.set(positionHash)
     }
+
+    @method moveCardinal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
+        // An addition and multiplication check to assert that `directionVector` contains a unit vector
+        // aka: exactly one 0 value and either a 1 or -1 in the x or y direction
+        let vectorMul = directionVector.x.mul(directionVector.y);
+        vectorMul.assertEquals(Field(0));
+        let vectorSum = directionVector.x.add(directionVector.y);
+        let isCorrectDirection = vectorSum.equals(Field(1)).or(vectorSum.equals(Field(-1)));
+        isCorrectDirection.assertEquals(Bool(true));
+
+        let xNew = oldPosition.x.add(directionVector.x);
+        let yNew = oldPosition.y.add(directionVector.y);
+        this.isWithinMapBounds({x: xNew, y: yNew});
+
+        let positionHash = Poseidon.hash([xNew, yNew, playerSalt])
+        this.playerPosition2D.set(positionHash)
+    }
     
 }
