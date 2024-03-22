@@ -1,6 +1,6 @@
 import { Bool, Field, Poseidon, SmartContract, State, Struct, method, state } from "o1js";
 
-class Position2D extends Struct({x: Field, y: Field}){}
+export class Position2D extends Struct({x: Field, y: Field}){}
 
 export class FullMovement extends SmartContract {
     @state(Field) playerPosition2D = State<Field>();
@@ -26,7 +26,7 @@ export class FullMovement extends SmartContract {
     @method setInitPosition(initPosition: Position2D, playerSalt: Field){
         let onchainPosition = this.playerPosition2D.getAndRequireEquals();
         onchainPosition.assertEquals(Field(0));
-        
+
         this.isWithinMapBounds(initPosition);
         let positionHash = Poseidon.hash([initPosition.x, initPosition.y, playerSalt])
         this.playerPosition2D.set(positionHash)
