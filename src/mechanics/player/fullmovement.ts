@@ -1,11 +1,9 @@
 import { Bool, Field, Poseidon, SmartContract, State, Struct, method, state } from "o1js";
-
-export class Position2D extends Struct({x: Field, y: Field}){}
+import { Position2D } from "../components";
 
 export class FullMovement extends SmartContract {
     @state(Field) playerPosition2D = State<Field>();
     @state(Position2D) rectangleMapBound = State<Position2D>();
-
 
     init(){
         super.init();
