@@ -84,7 +84,7 @@ describe('Player Position', () => {
         let myCurrentPositionHash: Field;
         let onchainPosition: Field;
 
-        // sets initial psotion to (2,2)
+        // sets initial position to (2,2)
         let txn = await Mina.transaction(playerAddress, () => {
             fullmoveZkApp.setInitPosition(myCurrentPosition, mySecretSalt);
         });
@@ -141,6 +141,83 @@ describe('Player Position', () => {
         // MOVING LEFT:
         txn = await Mina.transaction(playerAddress, () => {
             fullmoveZkApp.moveCardinal(myCurrentPosition, directionVectors.LEFT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(2), y: Field(2)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+
+    });
+
+    it('moves player position in all diagonal directions', async () => {
+        // init position setup
+        await fullmoveDeploy();
+        let myCurrentPosition = new Position2D({x: Field(2), y: Field(2)});
+        let mySecretSalt = Field(42069);
+        let myCurrentPositionHash: Field;
+        let onchainPosition: Field;
+
+        // sets initial position to (2,2)
+        let txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.setInitPosition(myCurrentPosition, mySecretSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        let directionVectors = {
+            UP_RIGHT: {x: Field(1), y: Field(1)},
+            UP_LEFT: {x: Field(-1), y: Field(1)},
+            DOWN_RIGHT: {x: Field(1), y: Field(-1)},
+            DOWN_LEFT: {x: Field(-1), y: Field(-1)},
+        }
+
+        // MOVING UP_RIGHT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveDiagonal(myCurrentPosition, directionVectors.UP_RIGHT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(3), y: Field(3)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        // MOVING DOWN_RIGHT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveDiagonal(myCurrentPosition, directionVectors.DOWN_RIGHT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(4), y: Field(2)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        
+        // MOVING DOWN_LEFT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveDiagonal(myCurrentPosition, directionVectors.DOWN_LEFT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(3), y: Field(1)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        // MOVING UP_LEFT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveDiagonal(myCurrentPosition, directionVectors.UP_LEFT, mySecretSalt )
         });
         await txn.prove();
         await txn.sign([playerKey]).send();
