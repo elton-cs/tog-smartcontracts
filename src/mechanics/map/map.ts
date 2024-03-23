@@ -1,26 +1,22 @@
-import { Field, SmartContract, State, method, state } from "o1js";
+import { Bool, Field, SmartContract, State, method, state } from "o1js";
+import { Position2D } from "../components";
 
 export class GameMap extends SmartContract {
-    @state(Field) maxX = State<Field>();
-    @state(Field) maxY = State<Field>();
+    @state(Position2D) mapBound = State<Position2D>();
 
     init() {
         super.init();
-        this.maxX.set(Field(0));
-        this.maxY.set(Field(0));
+        this.mapBound.set({x: Field(0), y: Field(0)});
     }
 
-    @method createMapArea(maxX: Field, maxY: Field) {
-        let initX = this.maxX.getAndRequireEquals();
-        let initY = this.maxY.getAndRequireEquals();
+    @method createMapArea(newMapBound: Position2D) {
+        let noMapBound = this.mapBound.getAndRequireEquals();
+        let isZeroMapOnchain = noMapBound.x.equals(Field(0)).and(noMapBound.y.equals(Field(0)));
+        isZeroMapOnchain.assertEquals(Bool(true));
 
-        initX.assertEquals(Field(0));
-        initY.assertEquals(Field(0));
+        let isValidMap = newMapBound.x.greaterThanOrEqual(Field(4)).and(newMapBound.y.greaterThanOrEqual(Field(4)));
+        isValidMap.assertEquals(Bool(true));
 
-        maxX.assertGreaterThan(Field(3));
-        maxY.assertGreaterThan(Field(3));
-
-        this.maxX.set(maxX);
-        this.maxY.set(maxY);
+        this.mapBound.set(newMapBound);
     }
 }
