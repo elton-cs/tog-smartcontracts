@@ -1,7 +1,7 @@
 import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
 import { FullMovement, Position2D } from './fullmovement';
 
-let proofsEnabled = false;
+let proofsEnabled = true;
 
 describe('Player Position', () => {
     let togDeployerKey: PrivateKey,
@@ -61,19 +61,96 @@ describe('Player Position', () => {
     it('sets initial position for player', async () => {
         await fullmoveDeploy();
 
-        let myNewPosition = new Position2D({x: Field(2), y: Field(2)});
+        let myCurrentPosition = new Position2D({x: Field(2), y: Field(2)});
         let mySecretSalt = Field(42069);
         
         const txn = await Mina.transaction(playerAddress, () => {
-            fullmoveZkApp.setInitPosition(myNewPosition, mySecretSalt);
+            fullmoveZkApp.setInitPosition(myCurrentPosition, mySecretSalt);
         });
         await txn.prove();
         await txn.sign([playerKey]).send();
 
-        let myNewPositionHash = Poseidon.hash([myNewPosition.x, myNewPosition.y, mySecretSalt])
+        let myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt])
         
         let onchainPosition = fullmoveZkApp.playerPosition2D.get();
-        expect(onchainPosition).toEqual(myNewPositionHash);
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+    });
+
+    it('moves player position in all cardinal directions', async () => {
+        // init position setup
+        await fullmoveDeploy();
+        let myCurrentPosition = new Position2D({x: Field(2), y: Field(2)});
+        let mySecretSalt = Field(42069);
+        let myCurrentPositionHash: Field;
+        let onchainPosition: Field;
+
+        // sets initial psotion to (2,2)
+        let txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.setInitPosition(myCurrentPosition, mySecretSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        let directionVectors = {
+            UP: {x: Field(0), y: Field(1)},
+            DOWN: {x: Field(0), y: Field(-1)},
+            LEFT: {x: Field(-1), y: Field(0)},
+            RIGHT: {x: Field(1), y: Field(0)},
+        }
+
+        // MOVING UP:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveCardinal(myCurrentPosition, directionVectors.UP, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(2), y: Field(3)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        // MOVING RIGHT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveCardinal(myCurrentPosition, directionVectors.RIGHT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(3), y: Field(3)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        
+        // MOVING DOWN:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveCardinal(myCurrentPosition, directionVectors.DOWN, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(3), y: Field(2)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+        
+        // MOVING LEFT:
+        txn = await Mina.transaction(playerAddress, () => {
+            fullmoveZkApp.moveCardinal(myCurrentPosition, directionVectors.LEFT, mySecretSalt )
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        myCurrentPosition = {x: Field(2), y: Field(2)};
+        myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
+        
+        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        expect(onchainPosition).toEqual(myCurrentPositionHash);
+
     });
 
 });
