@@ -15,7 +15,7 @@ export class GameMap extends SmartContract {
         isZeroMapOnchain.assertEquals(Bool(true));
 
         let isValidMap = newMapBound.x.greaterThanOrEqual(Field(4)).and(newMapBound.y.greaterThanOrEqual(Field(4)));
-        isValidMap.assertEquals(Bool(true));
+        isValidMap.assertTrue();
 
         this.mapBound.set(newMapBound);
     }
