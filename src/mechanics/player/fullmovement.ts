@@ -31,7 +31,7 @@ export class FullMovement extends SmartContract {
         return gameMapZkApp
     }
 
-    syncTicks() {
+    syncFromMapTicks() {
         let gameMapContract = this.gameMapContract.getAndRequireEquals();
         let gameMapZkApp = this.getGameMapZkApp(gameMapContract);
         let mapTick = gameMapZkApp.mapTick.getAndRequireEquals();
@@ -52,7 +52,7 @@ export class FullMovement extends SmartContract {
     }
 
     @method setInitPosition(initPosition: Position2D, playerSalt: Field){
-        this.syncTicks();
+        this.syncFromMapTicks();
 
         let onchainPosition = this.playerPosition2D.getAndRequireEquals();
         onchainPosition.assertEquals(Field(0));
