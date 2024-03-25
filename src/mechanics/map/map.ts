@@ -1,12 +1,14 @@
-import { Bool, Field, SmartContract, State, method, state } from "o1js";
+import { Bool, Field, SmartContract, State, UInt64, method, state } from "o1js";
 import { Position2D } from "../components";
 
 export class GameMap extends SmartContract {
     @state(Position2D) mapBound = State<Position2D>();
+    @state(UInt64) gameTick = State<UInt64>();
 
     init() {
         super.init();
         this.mapBound.set({x: Field(0), y: Field(0)});
+        this.gameTick.set(UInt64.from(0));
     }
 
     @method createMapArea(newMapBound: Position2D) {
@@ -19,4 +21,5 @@ export class GameMap extends SmartContract {
 
         this.mapBound.set(newMapBound);
     }
+
 }

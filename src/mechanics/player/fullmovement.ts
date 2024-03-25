@@ -1,10 +1,11 @@
-import { Bool, Field, Poseidon, PublicKey, SmartContract, State, Struct, method, state } from "o1js";
+import { Bool, Field, Poseidon, PublicKey, SmartContract, State, Struct, UInt64, method, state } from "o1js";
 import { Position2D } from "../components";
 import { GameMap } from "../map/map";
 
 export class FullMovement extends SmartContract {
     @state(Position2D) mapBound = State<Position2D>();
     @state(Field) playerPosition2D = State<Field>();
+    @state(UInt64) actionTick = State<UInt64>();
 
     init(){
         super.init();
@@ -12,6 +13,8 @@ export class FullMovement extends SmartContract {
         this.playerPosition2D.set(Field(0));
         // set max rectangle map bound to (10,10)
         this.mapBound.set({x: Field(0), y: Field(0)});
+
+        this.actionTick.set(UInt64.from(0));
     }
 
     isWithinMapBounds(position: Position2D) {
