@@ -6,6 +6,7 @@ export class FullMovement extends SmartContract {
     @state(Position2D) mapBound = State<Position2D>();
     @state(Field) playerPosition2D = State<Field>();
     @state(UInt64) actionTick = State<UInt64>();
+    @state(PublicKey) gameMapContract = State<PublicKey>();
 
     init(){
         super.init();
@@ -25,16 +26,34 @@ export class FullMovement extends SmartContract {
         position.y.assertLessThanOrEqual(onChainMapBound.y);
     }
 
+    getGameMapZkApp(gameMapContract: PublicKey): GameMap {
+        let gameMapZkApp = new GameMap(gameMapContract);
+        return gameMapZkApp
+    }
+
+    syncTicks() {
+        let gameMapContract = this.gameMapContract.getAndRequireEquals();
+        let gameMapZkApp = this.getGameMapZkApp(gameMapContract);
+        let mapTick = gameMapZkApp.mapTick.getAndRequireEquals();
+        let actionTick = this.actionTick.getAndRequireEquals();
+        mapTick.assertEquals(actionTick);
+        actionTick.add(UInt64.from(1));
+    }
+
     @method setGameInstanceMap(gameMapContract: PublicKey){
         this.mapBound.requireEquals({x: Field(0), y: Field(0)});
 
-        let gameMapZkApp = new GameMap(gameMapContract);
+        // let gameMapZkApp = new GameMap(gameMapContract);
+        let gameMapZkApp = this.getGameMapZkApp(gameMapContract);
         let mapBound = gameMapZkApp.mapBound.getAndRequireEquals();
 
         this.mapBound.set(mapBound);
+        this.gameMapContract.set(gameMapContract);
     }
 
     @method setInitPosition(initPosition: Position2D, playerSalt: Field){
+        this.syncTicks();
+
         let onchainPosition = this.playerPosition2D.getAndRequireEquals();
         onchainPosition.assertEquals(Field(0));
 

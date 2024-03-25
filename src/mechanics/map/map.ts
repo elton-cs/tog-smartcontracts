@@ -3,12 +3,12 @@ import { Position2D } from "../components";
 
 export class GameMap extends SmartContract {
     @state(Position2D) mapBound = State<Position2D>();
-    @state(UInt64) gameTick = State<UInt64>();
+    @state(UInt64) mapTick = State<UInt64>();
 
     init() {
         super.init();
         this.mapBound.set({x: Field(0), y: Field(0)});
-        this.gameTick.set(UInt64.from(0));
+        this.mapTick.set(UInt64.from(0));
     }
 
     @method createMapArea(newMapBound: Position2D) {
