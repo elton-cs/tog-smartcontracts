@@ -103,4 +103,21 @@ describe('Player Position', () => {
         })).rejects.toThrow();
     });
 
+    it('sets map of game instance to player movement contract', async () => {
+        await deployContract(togKey, fullmoveContractKey, fullmoveZkApp);
+        await deployContract(togKey, mapContractKey, mapZkApp);
+    
+        let txn = await Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(10,10));
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+    
+        txn = await Mina.transaction(togAddress, () => {
+            fullmoveZkApp.setGameInstanceMap(mapContractAddress);
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+    });
+    
 });
