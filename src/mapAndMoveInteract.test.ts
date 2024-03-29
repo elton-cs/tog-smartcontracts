@@ -62,5 +62,22 @@ describe('Player Position', () => {
         let initMapTick = mapZkApp.mapTick.get();
         expect(initMapTick).toEqual(expectedMapTick);
     });
+
+    it('generates and deploys the `FullMovement` smart contract', async () => {
+        await deployContract(togKey, fullmoveContractKey, fullmoveZkApp);
     
+        let expectedMapBound = Position2D.new(0,0);
+        let initMapBound = fullmoveZkApp.mapBound.get();
+        expect(initMapBound).toEqual(expectedMapBound);
+    
+        let expectedPlayerPosition = Field(0);
+        let initPlayerPosition = fullmoveZkApp.playerPosition.get();
+        expect(initPlayerPosition).toEqual(expectedPlayerPosition);
+    
+        let expectedActionTick = UInt64.from(0);
+        let initActionTick = fullmoveZkApp.actionTick.get();
+        expect(initActionTick).toEqual(expectedActionTick);
+    
+    });
+
 });
