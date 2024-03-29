@@ -51,4 +51,16 @@ describe('Player Position', () => {
     }
 
     // unit tests
+    it('generates and deploys the `Map` smart contract', async () => {
+        await deployContract(togKey, mapContractKey, mapZkApp);
+    
+        let expectedMapBound = Position2D.new(0,0);
+        let initMapBound = mapZkApp.mapBound.get();
+        expect(initMapBound).toEqual(expectedMapBound);
+    
+        let expectedMapTick = UInt64.from(0);
+        let initMapTick = mapZkApp.mapTick.get();
+        expect(initMapTick).toEqual(expectedMapTick);
+    });
+    
 });
