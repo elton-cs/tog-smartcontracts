@@ -80,4 +80,27 @@ describe('Player Position', () => {
     
     });
 
+    it('creates new playable maps with varying bounds', async () => {
+        await deployContract(togKey, mapContractKey, mapZkApp);
+    
+        expect(Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(-5,-5));
+        })).rejects.toThrow();
+    
+        expect(Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(0,0));
+        })).rejects.toThrow();
+    
+        
+        let txn = await Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(10,10));
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+    
+        expect(Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(5,5));
+        })).rejects.toThrow();
+    });
+
 });
