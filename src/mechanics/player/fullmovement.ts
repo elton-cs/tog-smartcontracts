@@ -4,16 +4,16 @@ import { GameMap } from "../map/map";
 
 export class FullMovement extends SmartContract {
     @state(Position2D) mapBound = State<Position2D>();
-    @state(Field) playerPosition2D = State<Field>();
+    @state(Field) playerPosition = State<Field>();
     @state(UInt64) actionTick = State<UInt64>();
     @state(PublicKey) gameMapContract = State<PublicKey>();
 
     init(){
         super.init();
         // initial player position to center of map
-        this.playerPosition2D.set(Field(0));
+        this.playerPosition.set(Field(0));
         // set max rectangle map bound to (10,10)
-        this.mapBound.set({x: Field(0), y: Field(0)});
+        this.mapBound.set(Position2D.new(0,0));
 
         this.actionTick.set(UInt64.from(0));
     }
@@ -54,17 +54,17 @@ export class FullMovement extends SmartContract {
     @method setInitPosition(initPosition: Position2D, playerSalt: Field){
         this.syncFromMapTicks();
 
-        let onchainPosition = this.playerPosition2D.getAndRequireEquals();
+        let onchainPosition = this.playerPosition.getAndRequireEquals();
         onchainPosition.assertEquals(Field(0));
 
         this.isWithinMapBounds(initPosition);
         let positionHash = Poseidon.hash([initPosition.x, initPosition.y, playerSalt])
-        this.playerPosition2D.set(positionHash)
+        this.playerPosition.set(positionHash)
     }
 
     @method moveCardinal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
         // assert function caller knows the salt, and therefore, has permission to update the position
-        let oldPositionHash = this.playerPosition2D.getAndRequireEquals();
+        let oldPositionHash = this.playerPosition.getAndRequireEquals();
         oldPositionHash.assertEquals(Poseidon.hash([oldPosition.x, oldPosition.y, playerSalt]));
         // An addition and multiplication check to assert that `directionVector` contains a unit vector
         // multiplying the components of the directionVector should give 0
@@ -82,12 +82,12 @@ export class FullMovement extends SmartContract {
         
         // update to the new position
         let positionHash = Poseidon.hash([xNew, yNew, playerSalt])
-        this.playerPosition2D.set(positionHash)
+        this.playerPosition.set(positionHash)
     }
 
     @method moveDiagonal(oldPosition: Position2D, directionVector: Position2D, playerSalt: Field){
         // assert function caller knows the salt, and therefore, has permission to update the position
-        let oldPositionHash = this.playerPosition2D.getAndRequireEquals();
+        let oldPositionHash = this.playerPosition.getAndRequireEquals();
         oldPositionHash.assertEquals(Poseidon.hash([oldPosition.x, oldPosition.y, playerSalt]));
         // An addition and multiplication check to assert that `directionVector` contains a diagonal vector
         // multiplying the components of the vector should give either 1 or -1
@@ -106,7 +106,7 @@ export class FullMovement extends SmartContract {
 
         // update to the new position
         let positionHash = Poseidon.hash([xNew, yNew, playerSalt])
-        this.playerPosition2D.set(positionHash)
+        this.playerPosition.set(positionHash)
     }
     
 }

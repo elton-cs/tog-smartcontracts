@@ -1,5 +1,6 @@
 import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
-import { FullMovement, Position2D } from './fullmovement';
+import { FullMovement } from './fullmovement';
+import { Position2D } from '../components';
 
 let proofsEnabled = true;
 
@@ -48,12 +49,12 @@ describe('Player Position', () => {
         await fullmoveDeploy();
 
         let initPosition = Field(0);
-        let initMapBound = new Position2D({x: Field(10), y: Field(10)});
+        let initMapBound = Position2D.new(0,0);
 
-        let deployedInitPosition = fullmoveZkApp.playerPosition2D.get();
+        let deployedInitPosition = fullmoveZkApp.playerPosition.get();
         expect(deployedInitPosition).toEqual(initPosition);
 
-        let deployedInitMapBound = fullmoveZkApp.rectangleMapBound.get(); 
+        let deployedInitMapBound = fullmoveZkApp.mapBound.get(); 
         expect(deployedInitMapBound).toEqual(initMapBound);
 
     });
@@ -72,7 +73,7 @@ describe('Player Position', () => {
 
         let myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt])
         
-        let onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        let onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
     });
 
@@ -108,7 +109,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(2), y: Field(3)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         // MOVING RIGHT:
@@ -121,7 +122,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(3), y: Field(3)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         
@@ -135,7 +136,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(3), y: Field(2)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         // MOVING LEFT:
@@ -148,7 +149,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(2), y: Field(2)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
 
     });
@@ -185,7 +186,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(3), y: Field(3)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         // MOVING DOWN_RIGHT:
@@ -198,7 +199,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(4), y: Field(2)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         
@@ -212,7 +213,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(3), y: Field(1)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
         
         // MOVING UP_LEFT:
@@ -225,7 +226,7 @@ describe('Player Position', () => {
         myCurrentPosition = {x: Field(2), y: Field(2)};
         myCurrentPositionHash = Poseidon.hash([myCurrentPosition.x, myCurrentPosition.y, mySecretSalt]);
         
-        onchainPosition = fullmoveZkApp.playerPosition2D.get();
+        onchainPosition = fullmoveZkApp.playerPosition.get();
         expect(onchainPosition).toEqual(myCurrentPositionHash);
 
     });

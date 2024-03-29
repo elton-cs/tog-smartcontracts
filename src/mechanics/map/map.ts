@@ -9,7 +9,7 @@ export class GameMap extends SmartContract {
 
     init() {
         super.init();
-        this.mapBound.set({x: Field(0), y: Field(0)});
+        this.mapBound.set(Position2D.new(0,0));
         this.mapTick.set(UInt64.from(0));
     }
 
@@ -28,7 +28,7 @@ export class GameMap extends SmartContract {
     // to support multiple player action commits in parallel
     @method commitAllPlayerActions(playerMovementContract: PublicKey){
         let fullMoveZkApp = new FullMovement(playerMovementContract);
-        let playerPositon = fullMoveZkApp.playerPosition2D.getAndRequireEquals();
+        let playerPositon = fullMoveZkApp.playerPosition.getAndRequireEquals();
         let actionTick = fullMoveZkApp.actionTick.getAndRequireEquals();
 
         let nextMapTick = this.mapTick.getAndRequireEquals().add(UInt64.from(1));
