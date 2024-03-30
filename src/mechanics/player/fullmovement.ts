@@ -3,10 +3,11 @@ import { Position2D } from "../components";
 import { GameMap } from "../map/map";
 
 export class FullMovement extends SmartContract {
+    @state(PublicKey) gameMapContract = State<PublicKey>();
     @state(Position2D) mapBound = State<Position2D>();
+
     @state(Field) playerPosition = State<Field>();
     @state(UInt64) actionTick = State<UInt64>();
-    @state(PublicKey) gameMapContract = State<PublicKey>();
 
     init(){
         super.init();
@@ -37,7 +38,7 @@ export class FullMovement extends SmartContract {
         let mapTick = gameMapZkApp.mapTick.getAndRequireEquals();
         let actionTick = this.actionTick.getAndRequireEquals();
         mapTick.assertEquals(actionTick);
-        actionTick.add(UInt64.from(1));
+        this.actionTick.set(actionTick.add(1));
     }
 
     @method setGameInstanceMap(gameMapContract: PublicKey){
