@@ -119,5 +119,42 @@ describe('Player Position', () => {
         await txn.prove();
         await txn.sign([togKey]).send();
     });
+
+    it('sets initial position of player via move contract', async () => {
+        await deployContract(togKey, fullmoveContractKey, fullmoveZkApp);
+        await deployContract(togKey, mapContractKey, mapZkApp);
     
+        let txn = await Mina.transaction(togAddress, () => {
+            mapZkApp.createMapArea(Position2D.new(10,10));
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+    
+        txn = await Mina.transaction(togAddress, () => {
+            fullmoveZkApp.setGameInstanceMap(mapContractAddress);
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+
+        // setting the position to a "random" location within the map bounds
+        let position = Position2D.new(2,2);
+        let playerSalt = Field(42069);
+        let initActionTick = fullmoveZkApp.actionTick.get();
+
+        txn = await Mina.transaction(togAddress, () => {
+            fullmoveZkApp.setInitPosition(position, playerSalt);
+        });
+        await txn.prove();
+        await txn.sign([togKey]).send();
+
+        let onchainPlayerPosition = fullmoveZkApp.playerPosition.getAndRequireEquals();
+        let expectedPlayerPosition = Poseidon.hash([position.x, position.y, playerSalt]);
+        expect(onchainPlayerPosition).toEqual(expectedPlayerPosition);
+
+        let onchainActionTick = fullmoveZkApp.actionTick.getAndRequireEquals();
+        let expectedActionTick = initActionTick.add(1);
+        expect(onchainActionTick).toEqual(expectedActionTick);
+
+    });
+
 });
