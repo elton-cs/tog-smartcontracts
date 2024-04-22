@@ -1,6 +1,8 @@
 import { Bool, Field, Poseidon, PublicKey, SmartContract, State, Struct, UInt64, method, state } from "o1js";
-import { Position2D } from "../components";
+import { Position2D, UnitVector2D } from "../components";
 import { GameMap } from "../map/map";
+
+const attackDistanceDefault = Field(5);
 
 export class Attack extends SmartContract {
     // todo!
@@ -58,5 +60,27 @@ export class Attack extends SmartContract {
         return [attackStartPoint, attackEndPoint];
 
     }
+
+    @method attackStraightShot(userPosition: Position2D, directionVector: UnitVector2D, playerSalt: Field):  [Position2D, Position2D]{
+
+        // assert provided position is the current position onchain
+        let position = this.playerPosition.getAndRequireEquals();
+        position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
+
+        // validate the provided direction vector is indeed a unit vector
+        directionVector.x.mul(directionVector.y).assertEquals(Field(0));
+        directionVector.x.add(directionVector.y).square().assertEquals(Field(1));
+
+        let attackVector = new Position2D({
+            x: directionVector.x.mul(attackDistanceDefault),
+            y: directionVector.y.mul(attackDistanceDefault),
+        })
+
+        let attackStartPoisition = userPosition.addUnitVector(directionVector);
+        let attackEndPosition = userPosition.add(attackVector);
+
+        return [attackStartPoisition, attackEndPosition];
+    }
+
     
 }
