@@ -37,3 +37,9 @@ export class UnitVector2D extends Struct({x: Field, y: Field}){
         return {x: Field(1), y: Field(0)}
     }
 }
+
+export class AttackSurface extends Struct({
+    // defines the start and end tiles for where the attack hits
+    attackStartPosition: Position2D,
+    attackEndPosition: Position2D,
+}) {}

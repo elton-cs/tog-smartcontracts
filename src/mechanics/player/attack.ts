@@ -1,5 +1,5 @@
 import { Bool, Field, Poseidon, PublicKey, SmartContract, State, Struct, UInt64, method, state } from "o1js";
-import { Position2D, UnitVector2D } from "../components";
+import { AttackSurface, Position2D, UnitVector2D } from "../components";
 import { GameMap } from "../map/map";
 
 const attackDistanceDefault = Field(5);
@@ -20,7 +20,7 @@ export class Attack extends SmartContract {
         this.opponentPosition.set(Field(0));
     }
 
-    @method attackMelee(userPosition: Position2D, playerSalt: Field): [Position2D, Position2D]{
+    @method attackMelee(userPosition: Position2D, playerSalt: Field): AttackSurface {
         let position = this.playerPosition.getAndRequireEquals();
         position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
 
@@ -33,11 +33,14 @@ export class Attack extends SmartContract {
         let attackTopRightPoint = new Position2D({x:tempX, y: tempY});
 
         // these points referece the corners of the square of the melee attack surface
-        return [attackBottomLeftPoint, attackTopRightPoint];
+        return new AttackSurface({
+            attackStartPosition: attackBottomLeftPoint,
+            attackEndPosition: attackTopRightPoint  
+        });
 
     }
 
-    @method attackRange(userPosition: Position2D, directionVector: Position2D, playerSalt: Field): [Position2D, Position2D]{
+    @method attackRange(userPosition: Position2D, directionVector: Position2D, playerSalt: Field): AttackSurface {
         let position = this.playerPosition.getAndRequireEquals();
         position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
 
@@ -57,11 +60,13 @@ export class Attack extends SmartContract {
         let attackEndPoint = new Position2D({x: tempX, y: tempY});
 
         // these points referece the corners of the square of the melee attack surface
-        return [attackStartPoint, attackEndPoint];
-
+        return new AttackSurface({
+            attackStartPosition: attackStartPoint,
+            attackEndPosition: attackEndPoint  
+        });
     }
 
-    @method attackStraightShot(userPosition: Position2D, directionVector: UnitVector2D, playerSalt: Field):  [Position2D, Position2D]{
+    @method attackStraightShot(userPosition: Position2D, directionVector: UnitVector2D, playerSalt: Field):  AttackSurface {
 
         // assert provided position is the current position onchain
         let position = this.playerPosition.getAndRequireEquals();
@@ -79,7 +84,14 @@ export class Attack extends SmartContract {
         let attackStartPoisition = userPosition.addUnitVector(directionVector);
         let attackEndPosition = userPosition.add(attackVector);
 
-        return [attackStartPoisition, attackEndPosition];
+        return new AttackSurface({
+            attackStartPosition: attackStartPoisition,
+            attackEndPosition: attackEndPosition,  
+        });
+    }
+
+    @method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, attackSurface: AttackSurface) {
+
     }
 
     
