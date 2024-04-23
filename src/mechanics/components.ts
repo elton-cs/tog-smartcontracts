@@ -43,3 +43,21 @@ export class AttackSurface extends Struct({
     attackStartPosition: Position2D,
     attackEndPosition: Position2D,
 }) {}
+
+
+@method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, userSaltRevealed: Field, opponentSaltRevealed: Field, attackSurface: AttackSurface): Bool {
+    // assert provided user position is the current player position onchain
+    let onchainUserPosition = this.playerPosition.getAndRequireEquals();
+    onchainUserPosition.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, userSaltRevealed]));
+
+    // assert provided oponent position is the current opponent position onchain
+    let onchainOpponentPosition = this.opponentPosition.getAndRequireEquals();
+    onchainOpponentPosition.assertEquals(Poseidon.hash([opponentPosition.x, opponentPosition.y, opponentSaltRevealed]));
+
+    // check if opponent is within the x bounds of user attack
+    let isWithinX = opponentPosition.x.greaterThanOrEqual(attackSurface.attackStartPosition.x).and(opponentPosition.x.lessThanOrEqual(attackSurface.attackEndPosition.x));
+    // check if opponent is within the y bounds of user attack
+    let isWithinY = opponentPosition.y.greaterThanOrEqual(attackSurface.attackStartPosition.y).and(opponentPosition.y.lessThanOrEqual(attackSurface.attackEndPosition.y));
+
+    return isWithinX.and(isWithinY);
+}

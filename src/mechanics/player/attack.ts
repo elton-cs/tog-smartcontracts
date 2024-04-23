@@ -11,13 +11,21 @@ export class Attack extends SmartContract {
     @state(UInt64) actionTick = State<UInt64>();
     
     @state(Field) playerPosition = State<Field>();
+    @state(Field) playerHealth = State<Field>();
+    
     @state(Field) opponentPosition = State<Field>();
+    @state(Field) opponentHealth = State<Field>();
 
     init(){
         super.init();
         // initial player position to center of map
         this.playerPosition.set(Field(0));
         this.opponentPosition.set(Field(0));
+
+        // set default initial health to 10 hit points
+        this.playerHealth.set(Field(10));
+        this.opponentHealth.set(Field(10));
+
     }
 
     @method attackMelee(userPosition: Position2D, playerSalt: Field): AttackSurface {
@@ -90,9 +98,6 @@ export class Attack extends SmartContract {
         });
     }
 
-    @method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, attackSurface: AttackSurface) {
-
-    }
 
     
 }
