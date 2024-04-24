@@ -109,7 +109,7 @@ export class Attack extends SmartContract {
         return [attackSurface, damage];
     }
 
-    @method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, userSaltRevealed: Field, opponentSaltRevealed: Field, attackSurface: AttackSurface): Bool {
+    @method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, userSaltRevealed: Field, opponentSaltRevealed: Field, attackSurfaceWithDamage: [AttackSurface, Field]) {
         // assert provided user position is the current player position onchain
         let onchainUserPosition = this.playerPosition.getAndRequireEquals();
         onchainUserPosition.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, userSaltRevealed]));
@@ -119,11 +119,20 @@ export class Attack extends SmartContract {
         onchainOpponentPosition.assertEquals(Poseidon.hash([opponentPosition.x, opponentPosition.y, opponentSaltRevealed]));
 
         // check if opponent is within the x bounds of user attack
-        let isWithinX = opponentPosition.x.greaterThanOrEqual(attackSurface.attackStartPosition.x).and(opponentPosition.x.lessThanOrEqual(attackSurface.attackEndPosition.x));
+        let isWithinX = opponentPosition.x.greaterThanOrEqual(attackSurfaceWithDamage[0].attackStartPosition.x).and(opponentPosition.x.lessThanOrEqual(attackSurfaceWithDamage[0].attackEndPosition.x));
         // check if opponent is within the y bounds of user attack
-        let isWithinY = opponentPosition.y.greaterThanOrEqual(attackSurface.attackStartPosition.y).and(opponentPosition.y.lessThanOrEqual(attackSurface.attackEndPosition.y));
+        let isWithinY = opponentPosition.y.greaterThanOrEqual(attackSurfaceWithDamage[0].attackStartPosition.y).and(opponentPosition.y.lessThanOrEqual(attackSurfaceWithDamage[0].attackEndPosition.y));
 
-        return isWithinX.and(isWithinY);
+        isWithinX.and(isWithinY).assertEquals(Bool(true));
+
+        // apply damage to opponent
+        let opponentHealth = this.opponentHealth.getAndRequireEquals();
+        // apply assertions for making sure the damage dealt is within the range of possible damages aka between 1 and 3
+        attackSurfaceWithDamage[1].assertGreaterThanOrEqual(Field(1));
+        attackSurfaceWithDamage[1].assertLessThanOrEqual(Field(3));
+        // apply assertions for making sure the damage dealt is less than the current health of the opponent
+        attackSurfaceWithDamage[1].assertLessThanOrEqual(opponentHealth);
+        let newOpponentHealth = opponentHealth.sub(attackSurfaceWithDamage[1]);
     }
 
 }
