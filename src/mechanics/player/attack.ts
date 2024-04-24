@@ -9,14 +9,14 @@ export class Attack extends SmartContract {
     @state(PublicKey) gameMapContract = State<PublicKey>();
     @state(Position2D) mapBound = State<Position2D>();
     @state(UInt64) actionTick = State<UInt64>();
-    
+
     @state(Field) playerPosition = State<Field>();
     @state(Field) playerHealth = State<Field>();
-    
+
     @state(Field) opponentPosition = State<Field>();
     @state(Field) opponentHealth = State<Field>();
 
-    init(){
+    init() {
         super.init();
         // initial player position to center of map
         this.playerPosition.set(Field(0));
@@ -28,27 +28,30 @@ export class Attack extends SmartContract {
 
     }
 
-    @method attackMelee(userPosition: Position2D, playerSalt: Field): AttackSurface {
+    @method attackMelee(userPosition: Position2D, playerSalt: Field): [AttackSurface, Field] {
         let position = this.playerPosition.getAndRequireEquals();
         position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
 
         let tempX = userPosition.x.sub(Field(1));
         let tempY = userPosition.y.sub(Field(1));
-        let attackBottomLeftPoint = new Position2D({x:tempX, y: tempY});
+        let attackBottomLeftPoint = new Position2D({ x: tempX, y: tempY });
 
         tempX = userPosition.x.add(Field(1));
         tempY = userPosition.y.add(Field(1));
-        let attackTopRightPoint = new Position2D({x:tempX, y: tempY});
+        let attackTopRightPoint = new Position2D({ x: tempX, y: tempY });
 
         // these points referece the corners of the square of the melee attack surface
-        return new AttackSurface({
+        let attackSurface = new AttackSurface({
             attackStartPosition: attackBottomLeftPoint,
-            attackEndPosition: attackTopRightPoint  
+            attackEndPosition: attackTopRightPoint
         });
 
+        let damage = Field(1);
+
+        return [attackSurface, damage];
     }
 
-    @method attackRange(userPosition: Position2D, directionVector: Position2D, playerSalt: Field): AttackSurface {
+    @method attackRange(userPosition: Position2D, directionVector: Position2D, playerSalt: Field): [AttackSurface, Field] {
         let position = this.playerPosition.getAndRequireEquals();
         position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
 
@@ -65,16 +68,20 @@ export class Attack extends SmartContract {
         let tempY = userPosition.y.add(Field(5)).mul(directionVector.y);
 
         let attackStartPoint = userPosition;
-        let attackEndPoint = new Position2D({x: tempX, y: tempY});
+        let attackEndPoint = new Position2D({ x: tempX, y: tempY });
 
         // these points referece the corners of the square of the melee attack surface
-        return new AttackSurface({
+        let attackSurface = new AttackSurface({
             attackStartPosition: attackStartPoint,
-            attackEndPosition: attackEndPoint  
+            attackEndPosition: attackEndPoint
         });
+
+        let damage = Field(2);
+
+        return [attackSurface, damage];
     }
 
-    @method attackStraightShot(userPosition: Position2D, directionVector: UnitVector2D, playerSalt: Field):  AttackSurface {
+    @method attackStraightShot(userPosition: Position2D, directionVector: UnitVector2D, playerSalt: Field): [AttackSurface, Field] {
 
         // assert provided position is the current position onchain
         let position = this.playerPosition.getAndRequireEquals();
@@ -92,10 +99,14 @@ export class Attack extends SmartContract {
         let attackStartPoisition = userPosition.addUnitVector(directionVector);
         let attackEndPosition = userPosition.add(attackVector);
 
-        return new AttackSurface({
+        let attackSurface = new AttackSurface({
             attackStartPosition: attackStartPoisition,
-            attackEndPosition: attackEndPosition,  
+            attackEndPosition: attackEndPosition,
         });
+
+        let damage = Field(3);
+
+        return [attackSurface, damage];
     }
 
     @method verifyAttackHit(userPosition: Position2D, opponentPosition: Position2D, userSaltRevealed: Field, opponentSaltRevealed: Field, attackSurface: AttackSurface): Bool {
@@ -114,5 +125,5 @@ export class Attack extends SmartContract {
 
         return isWithinX.and(isWithinY);
     }
-    
+
 }
