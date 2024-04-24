@@ -43,3 +43,9 @@ export class AttackSurface extends Struct({
     attackStartPosition: Position2D,
     attackEndPosition: Position2D,
 }) { }
+
+export class DamageComponent extends Struct({
+    damage: Field,
+    attackType: Field,
+    attackRange: AttackSurface
+}) { }
