@@ -30,8 +30,8 @@ export class Attack extends SmartContract {
 
     // !!! FOR TESTING ONLY !!!
     // temporary set player method implementation
-    @method setPlayerPosition(userPosition: Position2D, playerSalt: Field) {
-        let position = Poseidon.hash([userPosition.x, userPosition.y, playerSalt])
+    @method setPlayerPosition(playerPosition: Position2D, playerSalt: Field) {
+        let position = Poseidon.hash([playerPosition.x, playerPosition.y, playerSalt])
         this.playerPosition.set(position);
     }
     // temporary set opponent method implementation

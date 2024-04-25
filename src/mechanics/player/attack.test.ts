@@ -1,6 +1,7 @@
 import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
 // import { Position2D } from '../components';
 import { Attack } from './attack';
+import { Position2D } from '../components';
 
 let proofsEnabled = true;
 
@@ -66,6 +67,70 @@ describe('Player Position', () => {
         let deployedInitOpponentHealth = attackZkApp.opponentHealth.get();
         expect(deployedInitOpponentHealth).toEqual(initOpponentHealth);
 
+    });
+
+    it('tests set player position method', async () => {
+        await attackDeploy();
+
+        let playerPosition = Position2D.new(5, 5);
+        let playerSalt = Field(123);
+        let newPlayerPosition = Poseidon.hash([playerPosition.x, playerPosition.y, playerSalt]);
+
+        let txn = await Mina.transaction(playerAddress, () => {
+            attackZkApp.setPlayerPosition(playerPosition, playerSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        let deployedPlayerPosition = attackZkApp.playerPosition.get();
+        expect(deployedPlayerPosition).toEqual(newPlayerPosition);
+
+
+
+        playerPosition = Position2D.new(100, 62);
+        playerSalt = Field(123);
+        newPlayerPosition = Poseidon.hash([playerPosition.x, playerPosition.y, playerSalt]);
+
+        txn = await Mina.transaction(playerAddress, () => {
+            attackZkApp.setPlayerPosition(playerPosition, playerSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        deployedPlayerPosition = attackZkApp.playerPosition.get();
+        expect(deployedPlayerPosition).toEqual(newPlayerPosition);
+    });
+
+    it('tests set opponent position method', async () => {
+        await attackDeploy();
+
+        let opponentPosition = Position2D.new(19, 21);
+        let opponentSalt = Field(123);
+        let newOpponentPosition = Poseidon.hash([opponentPosition.x, opponentPosition.y, opponentSalt]);
+
+        let txn = await Mina.transaction(playerAddress, () => {
+            attackZkApp.setOpponentPosition(opponentPosition, opponentSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        let deployedOpponentPosition = attackZkApp.opponentPosition.get();
+        expect(deployedOpponentPosition).toEqual(newOpponentPosition);
+
+
+
+        opponentPosition = Position2D.new(54, 758);
+        opponentSalt = Field(123);
+        newOpponentPosition = Poseidon.hash([opponentPosition.x, opponentPosition.y, opponentSalt]);
+
+        txn = await Mina.transaction(playerAddress, () => {
+            attackZkApp.setOpponentPosition(opponentPosition, opponentSalt);
+        });
+        await txn.prove();
+        await txn.sign([playerKey]).send();
+
+        deployedOpponentPosition = attackZkApp.opponentPosition.get();
+        expect(deployedOpponentPosition).toEqual(newOpponentPosition);
     });
 
 });
