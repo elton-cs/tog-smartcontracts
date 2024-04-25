@@ -28,6 +28,19 @@ export class Attack extends SmartContract {
 
     }
 
+    // !!! FOR TESTING ONLY !!!
+    // temporary set player method implementation
+    @method setPlayerPosition(userPosition: Position2D, playerSalt: Field) {
+        let position = Poseidon.hash([userPosition.x, userPosition.y, playerSalt])
+        this.playerPosition.set(position);
+    }
+    // temporary set opponent method implementation
+    @method setOpponentPosition(opponentPosition: Position2D, opponentSalt: Field) {
+        let position = Poseidon.hash([opponentPosition.x, opponentPosition.y, opponentSalt])
+        this.opponentPosition.set(position);
+    }
+    // !!! FOR TESTING ONLY !!!
+
     @method attackMelee(userPosition: Position2D, playerSalt: Field): [AttackSurface, Field] {
         let position = this.playerPosition.getAndRequireEquals();
         position.assertEquals(Poseidon.hash([userPosition.x, userPosition.y, playerSalt]));
