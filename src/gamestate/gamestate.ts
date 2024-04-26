@@ -38,6 +38,8 @@ export class GameState extends SmartContract {
         // create contract instances from player contract
         const p1Contract = new Player(this.p1Contract.getAndRequireEquals());
 
+        this.gameTick.getAndRequireEquals().assertEquals(p1Contract.actionTick.getAndRequireEquals().add(1));
+
         // verify revealed actions match pending actions from player contract
         let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
         p1Contract.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
@@ -56,6 +58,8 @@ export class GameState extends SmartContract {
     @method updatePlayerHealt(attackDirection: Field, actionSalt: Field) {
         // create contract instances from player contract
         const p1Contract = new Player(this.p1Contract.getAndRequireEquals());
+
+        this.gameTick.getAndRequireEquals().assertEquals(p1Contract.actionTick.getAndRequireEquals().add(1));
 
         // verify revealed actions match pending actions from player contract
         let pendingAttack = Poseidon.hash([attackDirection, actionSalt]);
