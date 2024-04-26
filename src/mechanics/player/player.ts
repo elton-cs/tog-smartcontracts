@@ -13,11 +13,27 @@ export class Player extends SmartContract {
 
     init() {
         super.init();
+
+        this.gameStateContract.set(PublicKey.empty());
+
         this.actionTick.set(UInt64.from(0));
         this.gameTick.set(UInt64.from(0));
 
         this.pendingMoveAction.set(Field(0));
         this.pendingAttackAction.set(Field(0));
+    }
+
+    @method joinGame(gameStateContract: PublicKey) {
+        this.gameStateContract.getAndRequireEquals().assertEquals(PublicKey.empty());
+
+        let gameStateContractInstance = new GameState(gameStateContract);
+        let playerAddress = this.address;
+
+        let isP1 = gameStateContractInstance.p1Contract.get().equals(playerAddress);
+        let isP2 = gameStateContractInstance.p2Contract.get().equals(playerAddress);
+
+        isP1.or(isP2).assertTrue();
+        this.gameStateContract.set(gameStateContract);
     }
 
     @method setPendingActions(moveDirection: Field, attackDirection: Field, actionSalt: Field) {
