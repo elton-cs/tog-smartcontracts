@@ -1,36 +1,43 @@
-import { Field, PublicKey, SmartContract, State, UInt64, assert, method, state } from "o1js";
-import { Attack } from "./attack";
+import { Field, Poseidon, SmartContract, State, UInt64, method, state } from "o1js";
 
 export class Player extends SmartContract {
-    // one state contract for the player movement
-    @state(PublicKey) movementContract = State<PublicKey>();
+
     @state(Field) pendingMoveAction = State<Field>();
-    // one state contract for the player attacks
-    @state(PublicKey) attackContract = State<PublicKey>();
     @state(Field) pendingAttackAction = State<Field>();
 
-    @state(UInt64) currentTick = State<UInt64>();
+    @state(UInt64) actionTick = State<UInt64>();
+    @state(UInt64) gameTick = State<UInt64>();
+
 
     init() {
         super.init();
-        this.currentTick.set(UInt64.from(0));
-
-        this.movementContract.set(PublicKey.empty());
-        this.attackContract.set(PublicKey.empty());
+        this.actionTick.set(UInt64.from(0));
+        this.gameTick.set(UInt64.from(0));
 
         this.pendingMoveAction.set(Field(0));
         this.pendingAttackAction.set(Field(0));
     }
 
-    @method setContracts(movementContract: PublicKey, attackContract: PublicKey) {
-        let onchainMovementContract = this.movementContract.getAndRequireEquals();
-        let onchainAttackContract = this.attackContract.getAndRequireEquals();
+    @method setPendingActions(moveDirection: Field, attackDirection: Field, actionSalt: Field) {
+        let tick = this.actionTick.getAndRequireEquals();
+        this.gameTick.getAndRequireEquals().assertEquals(tick);
 
-        onchainMovementContract.assertEquals(PublicKey.empty());
-        onchainAttackContract.assertEquals(PublicKey.empty());
+        this.pendingMoveAction.getAndRequireEquals();
+        this.pendingAttackAction.getAndRequireEquals();
 
-        this.movementContract.set(movementContract);
-        this.attackContract.set(attackContract);
+        // numbers 1-9 represent valid directions for movement and attacking (based on number pad notation)
+        moveDirection.assertGreaterThanOrEqual(Field(1));
+        moveDirection.assertLessThanOrEqual(Field(9));
+
+        attackDirection.assertGreaterThanOrEqual(Field(1));
+        attackDirection.assertLessThanOrEqual(Field(9));
+
+        let hiddentMoveAction = Poseidon.hash([moveDirection, actionSalt]);
+        let hiddenAttackAction = Poseidon.hash([attackDirection, actionSalt]);
+
+        this.pendingMoveAction.set(hiddentMoveAction);
+        this.pendingAttackAction.set(hiddenAttackAction);
+
+        this.actionTick.set(tick.add(1));
     }
-
 }
