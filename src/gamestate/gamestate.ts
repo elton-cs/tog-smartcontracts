@@ -1,4 +1,4 @@
-import { Bool, Field, Poseidon, Provable, PublicKey, SmartContract, State, UInt64, method, state } from "o1js";
+import { Field, Poseidon, Provable, PublicKey, SmartContract, State, UInt64, method, state } from "o1js";
 import { DirectionVector2D, Position2D } from "../mechanics/components";
 import { Player } from "../mechanics/player/player";
 
@@ -32,6 +32,18 @@ export class GameState extends SmartContract {
 
         this.p1Health.set(Field(10));
         this.p2Health.set(Field(10));
+    }
+
+    @method instantiatePlayers(p1Contract: PublicKey, p2Contract: PublicKey) {
+        this.p1Contract.getAndRequireEquals().assertEquals(PublicKey.empty());
+        this.p2Contract.getAndRequireEquals().assertEquals(PublicKey.empty());
+
+        // assert that the player contracts are not the same
+        let isSame = p1Contract.equals(p2Contract);
+        isSame.assertFalse();
+
+        this.p1Contract.set(p1Contract);
+        this.p2Contract.set(p2Contract);
     }
 
     @method updatePlayerPositions(moveDirection: Field, actionSalt: Field) {
