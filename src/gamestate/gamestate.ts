@@ -46,11 +46,11 @@ export class GameState extends SmartContract {
         this.p2Contract.set(p2Contract);
     }
 
-    @method updatePlayerPositions(moveDirection: Field, actionSalt: Field) {
+    @method updateP1Move(moveDirection: Field, actionSalt: Field) {
         // create contract instances from player contract
         const p1Contract = new Player(this.p1Contract.getAndRequireEquals());
 
-        this.gameTick.getAndRequireEquals().assertEquals(p1Contract.actionTick.getAndRequireEquals().add(1));
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(p1Contract.actionTick.getAndRequireEquals());
 
         // verify revealed actions match pending actions from player contract
         let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
@@ -63,15 +63,40 @@ export class GameState extends SmartContract {
 
         // update the sub tick
         let tick = this.subTick.getAndRequireEquals();
-        tick.assertEquals(UInt64.from(0));
+        tick.assertLessThan(UInt64.from(2));
         this.subTick.set(tick.add(1));
     }
 
-    @method updatePlayerHealt(attackDirection: Field, actionSalt: Field) {
+    @method updateP2Move(moveDirection: Field, actionSalt: Field) {
+        // create contract instances from player contract
+        const p2Contract = new Player(this.p2Contract.getAndRequireEquals());
+
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(p2Contract.actionTick.getAndRequireEquals());
+
+        // verify revealed actions match pending actions from player contract
+        let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
+        p2Contract.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
+
+        // update player position from pending move action
+        let directionVector = DirectionVector2D.from(moveDirection);
+        let newP2Position = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector);
+        this.p2Position.set(newP2Position);
+
+        // update the sub tick
+        let tick = this.subTick.getAndRequireEquals();
+        tick.assertLessThan(UInt64.from(2));
+        this.subTick.set(tick.add(1));
+    }
+
+    @method updateP1Attack(attackDirection: Field, actionSalt: Field) {
+        let tick = this.subTick.getAndRequireEquals();
+        tick.assertGreaterThan(UInt64.from(1));
+        tick.assertLessThan(UInt64.from(4));
+
         // create contract instances from player contract
         const p1Contract = new Player(this.p1Contract.getAndRequireEquals());
 
-        this.gameTick.getAndRequireEquals().assertEquals(p1Contract.actionTick.getAndRequireEquals().add(1));
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(p1Contract.actionTick.getAndRequireEquals());
 
         // verify revealed actions match pending actions from player contract
         let pendingAttack = Poseidon.hash([attackDirection, actionSalt]);
@@ -100,15 +125,53 @@ export class GameState extends SmartContract {
         this.p2Health.set(newP2Health);
 
         // update the sub tick
+        this.subTick.set(tick.add(1));
+    }
+
+    @method updateP2Attack(attackDirection: Field, actionSalt: Field) {
         let tick = this.subTick.getAndRequireEquals();
-        tick.assertEquals(UInt64.from(1));
+        tick.assertGreaterThan(UInt64.from(1));
+        tick.assertLessThan(UInt64.from(4));
+
+        // create contract instances from player contract
+        const p2Contract = new Player(this.p2Contract.getAndRequireEquals());
+
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(p2Contract.actionTick.getAndRequireEquals());
+
+        // verify revealed actions match pending actions from player contract
+        let pendingAttack = Poseidon.hash([attackDirection, actionSalt]);
+        p2Contract.pendingAttackAction.getAndRequireEquals().assertEquals(pendingAttack);
+
+        // creat attack range from attack direction
+        let directionVector = DirectionVector2D.from(attackDirection);
+        let attackRangeStart = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector);
+        let attackRangeEnd = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector.multiply(Field(5)));
+
+        // update player health based on attack range
+        let p1Position = this.p1Position.getAndRequireEquals();
+        let xMatches = p1Position.x.greaterThanOrEqual(attackRangeStart.x).and(p1Position.x.lessThanOrEqual(attackRangeEnd.x)).and(p1Position.y.equals(attackRangeStart.y));
+        let yMatches = p1Position.y.greaterThanOrEqual(attackRangeStart.y).and(p1Position.y.lessThanOrEqual(attackRangeEnd.y)).and(p1Position.x.equals(attackRangeStart.x));
+
+        let attackWillHit = xMatches.or(yMatches);
+
+        let p1Health = this.p1Health.getAndRequireEquals();
+
+        let newP1Health = Provable.if(
+            attackWillHit,
+            p1Health.sub(Field(2)),
+            p1Health
+        );
+
+        this.p1Health.set(newP1Health);
+
+        // update the sub tick
         this.subTick.set(tick.add(1));
     }
 
     @method completeRound() {
         // reset sub tick
         let tick = this.subTick.getAndRequireEquals();
-        tick.assertEquals(UInt64.from(2));
+        tick.assertEquals(UInt64.from(4));
         this.subTick.set(UInt64.from(0));
 
         // update game tick
