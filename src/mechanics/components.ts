@@ -28,6 +28,10 @@ export class Position2D extends Struct({ x: Field, y: Field }) {
             y: this.y.add(directionVector.y),
         })
     }
+
+    toFields() {
+        return [this.x, this.y];
+    }
 }
 
 export class UnitVector2D extends Struct({ x: Field, y: Field }) {
@@ -83,7 +87,7 @@ export class DirectionVector2D extends Struct({ x: Field, y: Field }) {
             case Field(9):
                 return new DirectionVector2D({ x: Field(1), y: Field(1) });
             default:
-                throw new Error("Invalid direction");
+                return new DirectionVector2D({ x: Field(0), y: Field(0) });
         }
     }
 
