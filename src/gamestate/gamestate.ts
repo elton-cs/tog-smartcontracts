@@ -10,7 +10,10 @@ export class GameState extends SmartContract {
 
     // @state(Position2D) p1Position = State<Position2D>();
     // @state(Position2D) p2Position = State<Position2D>();
-    @state(Field) playerHashedPositions = State<Field>();
+    // @state(Field) playerHashedPositions = State<Field>();
+
+    @state(Field) p1PositionHash = State<Field>();
+    @state(Field) p2PositionHash = State<Field>();
 
     @state(Field) p1Health = State<Field>();
     @state(Field) p2Health = State<Field>();
@@ -33,13 +36,13 @@ export class GameState extends SmartContract {
         // todo: replace with random position generation
         // this.p1Position.set(Position2D.new(3, 5));
         // this.p2Position.set(Position2D.new(8, 6));
-        this.playerHashedPositions.set(Field(0));
+        this.p1PositionHash.set(Field(0));
+        this.p2PositionHash.set(Field(0));
 
         this.p1Health.set(Field(10));
         this.p2Health.set(Field(10));
 
     }
-
 
     @method instantiatePlayers(p1Contract: PublicKey, p2Contract: PublicKey) {
         let p1PlayerZkApp = new Player(p1Contract);
@@ -54,47 +57,43 @@ export class GameState extends SmartContract {
         this.playerHashedContracts.set(hashedContracts);
     }
 
-    // @method updateP1Move(moveDirection: Field, actionSalt: Field) {
-    //     // create contract instances from player contract
-    //     const p1Contract = new Player(this.p1Contract.getAndRequireEquals());
+    @method updateP1Move(playerContract: PublicKey, currentPlayerPosition: Position2D, moveDirection: Field, actionSalt: Field) {
+        const playerZkApp = new Player(playerContract);
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(playerZkApp.actionTick.getAndRequireEquals());
 
-    //     this.gameTick.getAndRequireEquals().add(1).assertEquals(p1Contract.actionTick.getAndRequireEquals());
+        let playerPositionHash = Poseidon.hash(currentPlayerPosition.toFields());
+        this.p1PositionHash.getAndRequireEquals().assertEquals(playerPositionHash);
 
-    //     // verify revealed actions match pending actions from player contract
-    //     let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
-    //     p1Contract.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
+        // verify revealed actions match pending actions from player contract
+        let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
+        playerZkApp.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
 
-    //     // update player position from pending move action
-    //     let directionVector = DirectionVector2D.from(moveDirection);
-    //     let newP1Position = this.p1Position.getAndRequireEquals().addDirectionVector(directionVector);
-    //     this.p1Position.set(newP1Position);
+        // update player position from pending move action
+        let directionVector = DirectionVector2D.from(moveDirection);
+        let newPlayerPosition = currentPlayerPosition.addDirectionVector(directionVector);
 
-    //     // update the sub tick
-    //     let tick = this.subTick.getAndRequireEquals();
-    //     tick.assertLessThan(UInt64.from(2));
-    //     this.subTick.set(tick.add(1));
-    // }
+        let newPositionHash = Poseidon.hash(newPlayerPosition.toFields());
+        this.p1PositionHash.set(newPositionHash);
+    }
 
-    // @method updateP2Move(moveDirection: Field, actionSalt: Field) {
-    //     // create contract instances from player contract
-    //     const p2Contract = new Player(this.p2Contract.getAndRequireEquals());
+    @method updateP2Move(playerContract: PublicKey, currentPlayerPosition: Position2D, moveDirection: Field, actionSalt: Field) {
+        const playerZkApp = new Player(playerContract);
+        this.gameTick.getAndRequireEquals().add(1).assertEquals(playerZkApp.actionTick.getAndRequireEquals());
 
-    //     this.gameTick.getAndRequireEquals().add(1).assertEquals(p2Contract.actionTick.getAndRequireEquals());
+        let playerPositionHash = Poseidon.hash(currentPlayerPosition.toFields());
+        this.p2PositionHash.getAndRequireEquals().assertEquals(playerPositionHash);
 
-    //     // verify revealed actions match pending actions from player contract
-    //     let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
-    //     p2Contract.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
+        // verify revealed actions match pending actions from player contract
+        let pendingMove = Poseidon.hash([moveDirection, actionSalt]);
+        playerZkApp.pendingMoveAction.getAndRequireEquals().assertEquals(pendingMove);
 
-    //     // update player position from pending move action
-    //     let directionVector = DirectionVector2D.from(moveDirection);
-    //     let newP2Position = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector);
-    //     this.p2Position.set(newP2Position);
+        // update player position from pending move action
+        let directionVector = DirectionVector2D.from(moveDirection);
+        let newPlayerPosition = currentPlayerPosition.addDirectionVector(directionVector);
 
-    //     // update the sub tick
-    //     let tick = this.subTick.getAndRequireEquals();
-    //     tick.assertLessThan(UInt64.from(2));
-    //     this.subTick.set(tick.add(1));
-    // }
+        let newPositionHash = Poseidon.hash(newPlayerPosition.toFields());
+        this.p2PositionHash.set(newPositionHash);
+    }
 
     // @method updateP1Attack(attackDirection: Field, actionSalt: Field) {
     //     let tick = this.subTick.getAndRequireEquals();
