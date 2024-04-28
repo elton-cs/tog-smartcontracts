@@ -4,13 +4,7 @@ import { Player } from "../mechanics/player/player";
 
 
 export class GameState extends SmartContract {
-    // @state(PublicKey) p1Contract = State<PublicKey>();
-    // @state(PublicKey) p2Contract = State<PublicKey>();
     @state(Field) playerHashedContracts = State<Field>();
-
-    // @state(Position2D) p1Position = State<Position2D>();
-    // @state(Position2D) p2Position = State<Position2D>();
-    // @state(Field) playerHashedPositions = State<Field>();
 
     @state(Field) p1PositionHash = State<Field>();
     @state(Field) p2PositionHash = State<Field>();
@@ -25,26 +19,19 @@ export class GameState extends SmartContract {
     init() {
         super.init();
 
-        // this.p1Contract.set(PublicKey.empty());
-        // this.p2Contract.set(PublicKey.empty());
         this.playerHashedContracts.set(Field(0));
 
         this.gameTick.set(UInt64.from(0));
         this.subTick.set(UInt64.from(0));
 
-        // temporary: set initial positions
-        // todo: replace with random position generation
-        // this.p1Position.set(Position2D.new(3, 5));
-        // this.p2Position.set(Position2D.new(8, 6));
         this.p1PositionHash.set(Field(0));
         this.p2PositionHash.set(Field(0));
 
-        this.p1Health.set(Field(10));
-        this.p2Health.set(Field(10));
-
+        this.p1Health.set(Field(0));
+        this.p2Health.set(Field(0));
     }
 
-    @method instantiatePlayers(p1Contract: PublicKey, p2Contract: PublicKey) {
+    @method instantiatePlayerContracts(p1Contract: PublicKey, p2Contract: PublicKey) {
         let p1PlayerZkApp = new Player(p1Contract);
         p1PlayerZkApp.gameStateContract.getAndRequireEquals().assertEquals(this.address);
 
@@ -56,6 +43,28 @@ export class GameState extends SmartContract {
         let hashedContracts = Poseidon.hash([hashedP1Contract, hashedP2Contract]);
         this.playerHashedContracts.set(hashedContracts);
     }
+
+    @method instantiatePlayerPositions(p1Position: Position2D, p2Position: Position2D) {
+        // temporary: set initial positions
+        // todo: replace with random position generation
+        this.p1PositionHash.getAndRequireEquals().assertEquals(Field(0));
+        this.p2PositionHash.getAndRequireEquals().assertEquals(Field(0));
+
+        let hashedP1Position = Poseidon.hash(p1Position.toFields());
+        let hashedP2Position = Poseidon.hash(p2Position.toFields());
+
+        this.p1PositionHash.set(hashedP1Position);
+        this.p2PositionHash.set(hashedP2Position);
+    }
+
+    @method instantiatePlayerHealth(playerHealth: Field) {
+        this.p1Health.getAndRequireEquals().assertEquals(Field(0));
+        this.p2Health.getAndRequireEquals().assertEquals(Field(0));
+
+        this.p1Health.set(playerHealth);
+        this.p2Health.set(playerHealth);
+    }
+
 
     @method updateP1Move(playerContract: PublicKey, currentPlayerPosition: Position2D, moveDirection: Field, actionSalt: Field) {
         const playerZkApp = new Player(playerContract);
