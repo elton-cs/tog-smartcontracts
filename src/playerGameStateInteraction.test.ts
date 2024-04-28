@@ -35,20 +35,17 @@ describe('Player Position', () => {
     p1PlayerContractAddress = p1PlayerContractKey.toPublicKey();
     p1PlayerZkApp = new Player(p1PlayerContractAddress);
 
-    // beforeAll(async () => {
-    //     if (proofsEnabled) {
-    //         await Player.compile();
-    //     }
-    // });
+    p2PlayerContractKey = PrivateKey.random();
+    p2PlayerContractAddress = p2PlayerContractKey.toPublicKey();
+    p2PlayerZkApp = new Player(p2PlayerContractAddress);
 
-    // beforeEach(() => {
-    //     const Local = Mina.LocalBlockchain({ proofsEnabled });
-    //     Mina.setActiveInstance(Local);
-    //     ({ privateKey: togDeployerKey, publicKey: togDeployerAddress } = Local.testAccounts[0]);
-    //     ({ privateKey: playerKey, publicKey: playerAddress } = Local.testAccounts[1]);
+    beforeAll(async () => {
+        if (proofsEnabled) {
+            await GameState.compile();
+            await Player.compile();
 
-
-    // });
+        }
+    });
 
     async function gameStateDeploy() {
         const txn = await Mina.transaction(togDeployerAddress, () => {
@@ -59,23 +56,21 @@ describe('Player Position', () => {
         await txn.sign([togDeployerKey, gameStateContractKey]).send();
     }
 
-    async function p1Deploy() {
-        const txn = await Mina.transaction(p1Address, () => {
-            AccountUpdate.fundNewAccount(p1Address);
-            p1PlayerZkApp.deploy();
+    async function playerDeploy(playerAddress: PublicKey, playerKey: PrivateKey, playerContractKey: PrivateKey, playerZkApp: Player) {
+        const txn = await Mina.transaction(playerAddress, () => {
+            AccountUpdate.fundNewAccount(playerAddress);
+            playerZkApp.deploy();
         });
         await txn.prove();
-        await txn.sign([p1Key, p1PlayerContractKey]).send();
+        await txn.sign([playerKey, playerContractKey]).send();
     }
 
-    it('generates and deploys the `Player` smart contract', async () => {
-        await GameState.compile();
+    // unit tests
+    it('deploys GameState and Player contracts', async () => {
         await gameStateDeploy();
-        await Player.compile();
-        await p1Deploy();
-
+        await playerDeploy(p1Address, p1Key, p1PlayerContractKey, p1PlayerZkApp);
+        await playerDeploy(p2Address, p2Key, p2PlayerContractKey, p2PlayerZkApp);
     });
 
-    // unit tests
 
 });
