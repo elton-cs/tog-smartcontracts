@@ -23,16 +23,18 @@ export class Player extends SmartContract {
         this.pendingAttackAction.set(Field(0));
     }
 
-    @method joinGame(gameStateContract: PublicKey) {
+    @method joinGame(gameStateContract: PublicKey, otherPlayerContract: PublicKey) {
         this.gameStateContract.getAndRequireEquals().assertEquals(PublicKey.empty());
 
-        let gameStateContractInstance = new GameState(gameStateContract);
+        let gameStateZkApp = new GameState(gameStateContract);
         let playerAddress = this.address;
 
-        let isP1 = gameStateContractInstance.p1Contract.get().equals(playerAddress);
-        let isP2 = gameStateContractInstance.p2Contract.get().equals(playerAddress);
+        let p1ContractHash = Poseidon.hash(playerAddress.toFields());
+        let p2ContractHash = Poseidon.hash(otherPlayerContract.toFields());
+        let hashedContracts = Poseidon.hash([p1ContractHash, p2ContractHash]);
 
-        isP1.or(isP2).assertTrue();
+        gameStateZkApp.playerHashedContracts.getAndRequireEquals().assertEquals(hashedContracts);
+
         this.gameStateContract.set(gameStateContract);
     }
 
