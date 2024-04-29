@@ -4,7 +4,8 @@ import { Player } from "../mechanics/player/player";
 
 
 export class GameState extends SmartContract {
-    @state(Field) playerHashedContracts = State<Field>();
+    @state(Field) p1HashedContract = State<Field>();
+    @state(Field) p2HashedContract = State<Field>();
 
     @state(Field) p1PositionHash = State<Field>();
     @state(Field) p2PositionHash = State<Field>();
@@ -19,7 +20,8 @@ export class GameState extends SmartContract {
     init() {
         super.init();
 
-        this.playerHashedContracts.set(Field(0));
+        this.p1HashedContract.set(Field(0));
+        this.p2HashedContract.set(Field(0));
 
         this.gameTick.set(UInt64.from(0));
         this.subTick.set(UInt64.from(0));
@@ -32,16 +34,16 @@ export class GameState extends SmartContract {
     }
 
     @method instantiatePlayerContracts(p1Contract: PublicKey, p2Contract: PublicKey) {
-        let p1PlayerZkApp = new Player(p1Contract);
-        p1PlayerZkApp.gameStateContract.getAndRequireEquals().assertEquals(this.address);
+        // let p1PlayerZkApp = new Player(p1Contract);
+        // p1PlayerZkApp.gameStateContract.getAndRequireEquals().assertEquals(this.address);
 
-        let p2PlayerZkApp = new Player(p2Contract);
-        p2PlayerZkApp.gameStateContract.getAndRequireEquals().assertEquals(this.address);
+        // let p2PlayerZkApp = new Player(p2Contract);
+        // p2PlayerZkApp.gameStateContract.getAndRequireEquals().assertEquals(this.address);
 
         let hashedP1Contract = Poseidon.hash(p1Contract.toFields());
         let hashedP2Contract = Poseidon.hash(p2Contract.toFields());
-        let hashedContracts = Poseidon.hash([hashedP1Contract, hashedP2Contract]);
-        this.playerHashedContracts.set(hashedContracts);
+        this.p1HashedContract.set(hashedP1Contract);
+        this.p2HashedContract.set(hashedP2Contract);
     }
 
     @method instantiatePlayerPositions(p1Position: Position2D, p2Position: Position2D) {
