@@ -1,6 +1,7 @@
-import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
+import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon, UInt64 } from 'o1js';
 import { Player } from './mechanics/player/player';
 import { GameState } from './gamestate/gamestate';
+import { DirectionVector2D, Position2D } from './mechanics/components';
 
 let proofsEnabled = true;
 
@@ -72,5 +73,166 @@ describe('Player Position', () => {
         await playerDeploy(p2Address, p2Key, p2PlayerContractKey, p2PlayerZkApp);
     });
 
+    it('instantiates players in GameState contract', async () => {
+        expect(gameStateZkApp.p1HashedContract.get()).toEqual(Field(0));
+        expect(gameStateZkApp.p2HashedContract.get()).toEqual(Field(0));
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.instantiatePlayerContracts(p1PlayerContractAddress, p2PlayerContractAddress);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        let p1ContractHash = Poseidon.hash(p1PlayerContractAddress.toFields());
+        let p2ContractHash = Poseidon.hash(p2PlayerContractAddress.toFields());
+        expect(gameStateZkApp.p1HashedContract.get()).toEqual(p1ContractHash);
+        expect(gameStateZkApp.p2HashedContract.get()).toEqual(p2ContractHash);
+
+    });
+
+    it('instantiates player positions in GameState contract', async () => {
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(Field(0));
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(Field(0));
+
+        let p1Position = Position2D.new(1, 4);
+        let p2Position = Position2D.new(7, 5);
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.instantiatePlayerPositions(p1Position, p2Position);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        let p1PositionHash = Poseidon.hash(p1Position.toFields());
+        let p2PositionHash = Poseidon.hash(p2Position.toFields());
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(p1PositionHash);
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(p2PositionHash);
+
+    });
+
+    it('instantiates player health in GameState contract', async () => {
+        expect(gameStateZkApp.p1Health.get()).toEqual(Field(0));
+        expect(gameStateZkApp.p2Health.get()).toEqual(Field(0));
+
+        let playerHealth = Field(100);
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.instantiatePlayerHealth(playerHealth);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        expect(gameStateZkApp.p1Health.get()).toEqual(playerHealth);
+        expect(gameStateZkApp.p2Health.get()).toEqual(playerHealth);
+    });
+
+    it('joins players from Player contract to GameState contract', async () => {
+        expect(p1PlayerZkApp.gameStateContract.get()).toEqual(PublicKey.empty());
+
+        let txn = await Mina.transaction(p1Address, () => {
+            p1PlayerZkApp.joinPlayer1(gameStateContractAddress);
+        });
+        await txn.prove();
+        await txn.sign([p1Key]).send();
+
+        expect(p1PlayerZkApp.gameStateContract.get()).toEqual(gameStateContractAddress);
+
+        expect(p2PlayerZkApp.gameStateContract.get()).toEqual(PublicKey.empty());
+
+        txn = await Mina.transaction(p2Address, () => {
+            p2PlayerZkApp.joinPlayer2(gameStateContractAddress);
+        });
+        await txn.prove();
+        await txn.sign([p2Key]).send();
+
+        expect(p2PlayerZkApp.gameStateContract.get()).toEqual(gameStateContractAddress);
+
+    });
+
+    it('sets pending actions for player 1', async () => {
+        let p1move = Field(1);
+        let p1attack = Field(2);
+        let p1salt = Field(42069);
+
+        expect(p1PlayerZkApp.pendingMoveAction.get()).toEqual(Field(0));
+        expect(p1PlayerZkApp.pendingAttackAction.get()).toEqual(Field(0));
+        expect(p1PlayerZkApp.actionTick.get()).toEqual(UInt64.from(0));
+        expect(p1PlayerZkApp.gameTick.get()).toEqual(UInt64.from(0));
+
+        let txn = await Mina.transaction(p1Address, () => {
+            p1PlayerZkApp.setPendingActions(p1move, p1attack, p1salt);
+        });
+        await txn.prove();
+        await txn.sign([p1Key]).send();
+
+        expect(p1PlayerZkApp.pendingMoveAction.get()).toEqual(Poseidon.hash([p1move, p1salt]));
+        expect(p1PlayerZkApp.pendingAttackAction.get()).toEqual(Poseidon.hash([p1attack, p1salt]));
+        expect(p1PlayerZkApp.actionTick.get()).toEqual(UInt64.from(1));
+        expect(p1PlayerZkApp.gameTick.get()).toEqual(UInt64.from(0));
+
+    });
+
+    it('sets pending actions for player 2', async () => {
+        let p2move = Field(3);
+        let p2attack = Field(4);
+        let p2salt = Field(69420);
+
+        expect(p2PlayerZkApp.pendingMoveAction.get()).toEqual(Field(0));
+        expect(p2PlayerZkApp.pendingAttackAction.get()).toEqual(Field(0));
+        expect(p2PlayerZkApp.actionTick.get()).toEqual(UInt64.from(0));
+        expect(p2PlayerZkApp.gameTick.get()).toEqual(UInt64.from(0));
+
+        let txn = await Mina.transaction(p2Address, () => {
+            p2PlayerZkApp.setPendingActions(p2move, p2attack, p2salt);
+        });
+        await txn.prove();
+        await txn.sign([p2Key]).send();
+
+        expect(p2PlayerZkApp.pendingMoveAction.get()).toEqual(Poseidon.hash([p2move, p2salt]));
+        expect(p2PlayerZkApp.pendingAttackAction.get()).toEqual(Poseidon.hash([p2attack, p2salt]));
+        expect(p2PlayerZkApp.actionTick.get()).toEqual(UInt64.from(1));
+        expect(p2PlayerZkApp.gameTick.get()).toEqual(UInt64.from(0));
+
+    });
+
+    it('updates player 1 move in GameState contract', async () => {
+        // p1 reveals their move and temp salt value
+        let p1move = Field(1);
+        let p1salt = Field(42069);
+
+        let p1Position = Position2D.new(1, 4);
+        let p1NewPosition = p1Position.addDirectionVector(DirectionVector2D.from(p1move));
+
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(Poseidon.hash(p1Position.toFields()));
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.updateP1Move(p1PlayerContractAddress, p1Position, p1move, p1salt);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(Poseidon.hash(p1NewPosition.toFields()));
+
+    });
+
+    it('updates player 2 move in GameState contract', async () => {
+        // p2 reveals their move and temp salt value
+        let p2move = Field(3);
+        let p2salt = Field(69420);
+
+        let p2Position = Position2D.new(7, 5);
+        let p2NewPosition = p2Position.addDirectionVector(DirectionVector2D.from(p2move));
+
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(Poseidon.hash(p2Position.toFields()));
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.updateP2Move(p2PlayerContractAddress, p2Position, p2move, p2salt);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(Poseidon.hash(p2NewPosition.toFields()));
+
+    });
 
 });
