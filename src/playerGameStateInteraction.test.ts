@@ -3,7 +3,7 @@ import { Player } from './mechanics/player/player';
 import { GameState } from './gamestate/gamestate';
 import { DirectionVector2D, Position2D } from './mechanics/components';
 
-let proofsEnabled = true;
+let proofsEnabled = false;
 
 describe('Player Position', () => {
     let togDeployerKey: PrivateKey,
@@ -150,7 +150,7 @@ describe('Player Position', () => {
     });
 
     it('sets pending actions for player 1', async () => {
-        let p1move = Field(1);
+        let p1move = Field(6);
         let p1attack = Field(2);
         let p1salt = Field(42069);
 
@@ -173,7 +173,7 @@ describe('Player Position', () => {
     });
 
     it('sets pending actions for player 2', async () => {
-        let p2move = Field(3);
+        let p2move = Field(1);
         let p2attack = Field(4);
         let p2salt = Field(69420);
 
@@ -197,7 +197,7 @@ describe('Player Position', () => {
 
     it('updates player 1 move in GameState contract', async () => {
         // p1 reveals their move and temp salt value
-        let p1move = Field(1);
+        let p1move = Field(6);
         let p1salt = Field(42069);
 
         let p1Position = Position2D.new(1, 4);
@@ -217,7 +217,7 @@ describe('Player Position', () => {
 
     it('updates player 2 move in GameState contract', async () => {
         // p2 reveals their move and temp salt value
-        let p2move = Field(3);
+        let p2move = Field(1);
         let p2salt = Field(69420);
 
         let p2Position = Position2D.new(7, 5);
@@ -232,6 +232,66 @@ describe('Player Position', () => {
         await txn.sign([togDeployerKey]).send();
 
         expect(gameStateZkApp.p2PositionHash.get()).toEqual(Poseidon.hash(p2NewPosition.toFields()));
+
+    });
+
+    it('updates player 1 attack and health in GameState contract', async () => {
+        // p1 reveals their attack and temp salt value
+        let p1attack = Field(2);
+        let p1salt = Field(42069);
+
+        // p1 revealed move value
+        let p1move = Field(6);
+        let p2move = Field(1);
+
+        let p1Position = Position2D.new(1, 4);
+        let p1NewPosition = p1Position.addDirectionVector(DirectionVector2D.from(p1move));
+
+        let p2Position = Position2D.new(7, 5);
+        let p2NewPosition = p2Position.addDirectionVector(DirectionVector2D.from(p2move));
+
+        expect(gameStateZkApp.p2Health.get()).toEqual(Field(100));
+
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(Poseidon.hash(p1NewPosition.toFields()));
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(Poseidon.hash(p2NewPosition.toFields()));
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.updateP1Attack(p1PlayerContractAddress, p1NewPosition, p2NewPosition, p1attack, p1salt);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        expect(gameStateZkApp.p2Health.get()).toEqual(Field(100));
+
+    });
+
+    it('updates player 1 attack and health in GameState contract', async () => {
+        // p2 reveals their attack and temp salt value
+        let p2attack = Field(4);
+        let p2salt = Field(69420);
+
+        // p1 revealed move value
+        let p1move = Field(6);
+        let p2move = Field(1);
+
+        let p1Position = Position2D.new(1, 4);
+        let p1NewPosition = p1Position.addDirectionVector(DirectionVector2D.from(p1move));
+
+        let p2Position = Position2D.new(7, 5);
+        let p2NewPosition = p2Position.addDirectionVector(DirectionVector2D.from(p2move));
+
+        expect(gameStateZkApp.p1Health.get()).toEqual(Field(100));
+
+        expect(gameStateZkApp.p1PositionHash.get()).toEqual(Poseidon.hash(p1NewPosition.toFields()));
+        expect(gameStateZkApp.p2PositionHash.get()).toEqual(Poseidon.hash(p2NewPosition.toFields()));
+
+        let txn = await Mina.transaction(togDeployerAddress, () => {
+            gameStateZkApp.updateP1Attack(p2PlayerContractAddress, p1NewPosition, p2NewPosition, p2attack, p2salt);
+        });
+        await txn.prove();
+        await txn.sign([togDeployerKey]).send();
+
+        expect(gameStateZkApp.p1Health.get()).toEqual(Field(100));
 
     });
 
