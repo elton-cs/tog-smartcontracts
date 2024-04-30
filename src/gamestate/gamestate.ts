@@ -85,6 +85,9 @@ export class GameState extends SmartContract {
 
         let newPositionHash = Poseidon.hash(newPlayerPosition.toFields());
         this.p1PositionHash.set(newPositionHash);
+
+        this.subTick.getAndRequireEquals().assertEquals(UInt64.from(0));
+        this.subTick.set(UInt64.from(1));
     }
 
     @method updateP2Move(playerContract: PublicKey, currentPlayerPosition: Position2D, moveDirection: Field, actionSalt: Field) {
@@ -104,6 +107,9 @@ export class GameState extends SmartContract {
 
         let newPositionHash = Poseidon.hash(newPlayerPosition.toFields());
         this.p2PositionHash.set(newPositionHash);
+
+        this.subTick.getAndRequireEquals().assertEquals(UInt64.from(1));
+        this.subTick.set(UInt64.from(2));
     }
 
     @method updateP1Attack(playerContract: PublicKey, updatedP1Position: Position2D, updatedP2Position: Position2D, attackDirection: Field, actionSalt: Field) {
@@ -140,6 +146,9 @@ export class GameState extends SmartContract {
         );
 
         this.p2Health.set(newP2Health);
+
+        this.subTick.getAndRequireEquals().assertEquals(UInt64.from(2));
+        this.subTick.set(UInt64.from(3));
     }
 
     @method updateP2Attack(playerContract: PublicKey, updatedP1Position: Position2D, updatedP2Position: Position2D, attackDirection: Field, actionSalt: Field) {
@@ -175,58 +184,21 @@ export class GameState extends SmartContract {
             p1Health
         );
 
-        this.p2Health.set(newP1Health);
+        this.p1Health.set(newP1Health);
+
+        this.subTick.getAndRequireEquals().assertEquals(UInt64.from(3));
+        this.subTick.set(UInt64.from(4));
     }
 
-    // @method updateP2Attack(attackDirection: Field, actionSalt: Field) {
-    //     let tick = this.subTick.getAndRequireEquals();
-    //     tick.assertGreaterThan(UInt64.from(1));
-    //     tick.assertLessThan(UInt64.from(4));
+    @method completeRound() {
+        // reset sub tick
+        let tick = this.subTick.getAndRequireEquals();
+        tick.assertEquals(UInt64.from(4));
+        this.subTick.set(UInt64.from(0));
 
-    //     // create contract instances from player contract
-    //     const p2Contract = new Player(this.p2Contract.getAndRequireEquals());
-
-    //     this.gameTick.getAndRequireEquals().add(1).assertEquals(p2Contract.actionTick.getAndRequireEquals());
-
-    //     // verify revealed actions match pending actions from player contract
-    //     let pendingAttack = Poseidon.hash([attackDirection, actionSalt]);
-    //     p2Contract.pendingAttackAction.getAndRequireEquals().assertEquals(pendingAttack);
-
-    //     // creat attack range from attack direction
-    //     let directionVector = DirectionVector2D.from(attackDirection);
-    //     let attackRangeStart = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector);
-    //     let attackRangeEnd = this.p2Position.getAndRequireEquals().addDirectionVector(directionVector.multiply(Field(5)));
-
-    //     // update player health based on attack range
-    //     let p1Position = this.p1Position.getAndRequireEquals();
-    //     let xMatches = p1Position.x.greaterThanOrEqual(attackRangeStart.x).and(p1Position.x.lessThanOrEqual(attackRangeEnd.x)).and(p1Position.y.equals(attackRangeStart.y));
-    //     let yMatches = p1Position.y.greaterThanOrEqual(attackRangeStart.y).and(p1Position.y.lessThanOrEqual(attackRangeEnd.y)).and(p1Position.x.equals(attackRangeStart.x));
-
-    //     let attackWillHit = xMatches.or(yMatches);
-
-    //     let p1Health = this.p1Health.getAndRequireEquals();
-
-    //     let newP1Health = Provable.if(
-    //         attackWillHit,
-    //         p1Health.sub(Field(2)),
-    //         p1Health
-    //     );
-
-    //     this.p1Health.set(newP1Health);
-
-    //     // update the sub tick
-    //     this.subTick.set(tick.add(1));
-    // }
-
-    // @method completeRound() {
-    //     // reset sub tick
-    //     let tick = this.subTick.getAndRequireEquals();
-    //     tick.assertEquals(UInt64.from(4));
-    //     this.subTick.set(UInt64.from(0));
-
-    //     // update game tick
-    //     let gameTick = this.gameTick.getAndRequireEquals();
-    //     this.gameTick.set(gameTick.add(1));
-    // }
+        // update game tick
+        let gameTick = this.gameTick.getAndRequireEquals();
+        this.gameTick.set(gameTick.add(1));
+    }
 
 }
