@@ -156,7 +156,7 @@ describe('Player Position', () => {
 
     it('sets pending actions for player 1', async () => {
         let p1move = Field(6);
-        let p1attack = Field(2);
+        let p1attack = Field(8);
         let p1salt = Field(42069);
 
         expect(p1PlayerZkApp.pendingMoveAction.get()).toEqual(Field(0));
@@ -248,7 +248,7 @@ describe('Player Position', () => {
 
     it('updates player 1 attack and health in GameState contract', async () => {
         // p1 reveals their attack and temp salt value
-        let p1attack = Field(2);
+        let p1attack = Field(8);
         let p1salt = Field(42069);
 
         // p1 revealed move value
@@ -294,7 +294,9 @@ describe('Player Position', () => {
         let p1NewPosition = p1Position.addDirectionVector(DirectionVector2D.from(p1move));
 
         let p2Position = Position2D.new(7, 5);
+        console.log(p2Position.toFields().toString());
         let p2NewPosition = p2Position.addDirectionVector(DirectionVector2D.from(p2move));
+        console.log(p2NewPosition.toFields().toString());
 
         expect(gameStateZkApp.p1Health.get()).toEqual(Field(100));
 
@@ -307,7 +309,7 @@ describe('Player Position', () => {
         await txn.prove();
         await txn.sign([togDeployerKey]).send();
 
-        expect(gameStateZkApp.p1Health.get()).toEqual(Field(100));
+        expect(gameStateZkApp.p1Health.get()).toEqual(Field(98));
         expect(gameStateZkApp.subTick.get()).toEqual(UInt64.from(4));
 
     });
