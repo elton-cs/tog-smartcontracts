@@ -123,9 +123,9 @@ export class GameState extends SmartContract {
         this.p1PositionHash.getAndRequireEquals().assertEquals(Poseidon.hash(updatedP1Position.toFields()));
 
         // creat attack range from attack direction
-        let directionVector = DirectionVector2D.from(attackDirection);
-        let attackRangeStart = updatedP1Position.addDirectionVector(directionVector);
-        let attackRangeEnd = updatedP1Position.addDirectionVector(directionVector.multiply(Field(5)));
+        let attackRanges = updatedP1Position.getAttackRange(DirectionVector2D.from(attackDirection), 5);
+        let attackRangeStart = attackRanges.attackStartPosition;
+        let attackRangeEnd = attackRanges.attackEndPosition;
 
         this.p2PositionHash.getAndRequireEquals().assertEquals(Poseidon.hash(updatedP2Position.toFields()));
 
@@ -162,9 +162,9 @@ export class GameState extends SmartContract {
         this.p2PositionHash.getAndRequireEquals().assertEquals(Poseidon.hash(updatedP2Position.toFields()));
 
         // creat attack range from attack direction
-        let directionVector = DirectionVector2D.from(attackDirection);
-        let attackRangeStart = updatedP2Position.addDirectionVector(directionVector);
-        let attackRangeEnd = updatedP2Position.addDirectionVector(directionVector.multiply(Field(5)));
+        let attackRanges = updatedP2Position.getAttackRange(DirectionVector2D.from(attackDirection), 5);
+        let attackRangeStart = attackRanges.attackStartPosition;
+        let attackRangeEnd = attackRanges.attackEndPosition;
 
         this.p1PositionHash.getAndRequireEquals().assertEquals(Poseidon.hash(updatedP1Position.toFields()));
 
